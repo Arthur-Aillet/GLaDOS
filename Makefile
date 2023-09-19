@@ -5,12 +5,10 @@
 ## GLaDOS Makefile
 ##
 
-BIN_PATH		:=	$(shell stack path --local-install-root)
 NAME			=	glados
 
 all:
-		stack build
-		stack --local-bin-path . install
+	stack --local-bin-path . install
 
 clean:
 	stack clean
@@ -23,4 +21,4 @@ re: fclean all
 quick:
 	ghc app/*.hs src/*.hs -o $(NAME)
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re quick
