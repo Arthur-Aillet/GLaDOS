@@ -2,7 +2,7 @@
 ## EPITECH PROJECT, 2023
 ## Makefile
 ## File description:
-## Wolfram Malefile
+## GLaDOS Makefile
 ##
 
 BIN_PATH		:=	$(shell stack path --local-install-root)
@@ -10,7 +10,7 @@ NAME			=	glados
 
 all:
 		stack build
-		cp $(BIN_PATH)/bin/$(NAME)-exe ./$(NAME)
+		stack --local-bin-path . install
 
 clean:
 	stack clean
