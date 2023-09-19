@@ -2,10 +2,8 @@ module ParserSpec (
   parserTests  
 ) where 
 
+import Lib
 import Test.HUnit
-
-foo::Int ->Int
-foo = (+1)
     
 testFoo :: Test
 testFoo = TestCase $ assertEqual "Should return 2" 2 (foo 1)
