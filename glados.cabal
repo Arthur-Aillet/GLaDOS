@@ -1,14 +1,14 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           glados
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/Arthur-Aillet/GLaDOS#readme>
-homepage:       https://github.com/Arthur-Aillet/GLaDOSs#readme
-bug-reports:    https://github.com/Arthur-Aillet/GLaDOSs/issues
+homepage:       https://github.com/Arthur-Aillet/GLaDOS#readme
+bug-reports:    https://github.com/Arthur-Aillet/GLaDOS/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2023 Author name here
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/Arthur-Aillet/GLaDOSs
+  location: https://github.com/Arthur-Aillet/GLaDOS
 
 library
   exposed-modules:
@@ -51,13 +51,13 @@ test-suite glados-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_glados
       ParserSpec
+      Paths_glados
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , HUnit
+      HUnit
+    , base >=4.7 && <5
     , glados
   default-language: Haskell2010
