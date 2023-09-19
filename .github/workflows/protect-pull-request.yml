@@ -22,4 +22,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-
       - name: Build and run tests
-          run: "stack test --fast --no-terminal --system-ghc"
+        run: "stack test --fast --no-terminal --system-ghc"
