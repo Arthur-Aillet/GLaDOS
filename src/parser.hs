@@ -5,6 +5,8 @@
 -- parser
 --
 
+import Text.Read (readMaybe)
+
 data SExpr  = SInt Int
             | SSym String
             | SList [SExpr]
@@ -19,16 +21,12 @@ strArrayToSExpr ("(" : xs) = (SList (strArrayToSExpr (getInsideParentheses(("(" 
 strArrayToSExpr (x : xs) = (strToSExpr x : strArrayToSExpr xs )
 
 strToSExpr :: String -> SExpr
-strToSExpr str  | isInt str == True = SInt (read str :: Int)
-                | otherwise = SSym str
+strToSExpr str = case readMaybe str :: Maybe Int of
+                    Just i -> SInt i
+                    _ -> SSym str
 
 sexprSplit :: String -> [String]
 sexprSplit input = cleanStrings (cleanStrings (separateCharOnList (separateCharOnList (strSplit input ' ') '(') ')') "") "\n"
-
-isInt :: String -> Bool
-isInt (x : xs)  | isBetween x '0' '9' == True = isInt xs
-                | otherwise = False
-isInt [] = True
 
 isBetween :: Char -> Char -> Char -> Bool
 isBetween c smaller bigger  | c > bigger = False
