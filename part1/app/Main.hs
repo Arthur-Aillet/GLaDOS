@@ -7,7 +7,7 @@ module Main (main) where
 data SExpr  = SInt Int
             | SSym String
             | SList [SExpr]
-            deriving (Show)
+            deriving (Show, Eq)
 
 
 -- SList [SSym "define", SSym "x", SInt 5]
@@ -49,16 +49,22 @@ printTree (SList l) = fmap ("a List with "  ++) (printInsideList l)
 
 -- Exo 1
 
-data Ast = Define { variableName :: String, definition :: Ast }
-         | IntLiteral { intValue :: Int }
-         | Symbol { symbolName :: String }
-         | Boolean { boolValue :: Bool }
+data Ast = Define { name :: String, val :: Ast }
+         | AInt { intValue :: Int }
+         | ASym { symbolName :: String }
+         | ABool { boolValue :: Bool }
          deriving Show
 
 -- Exo 2
 
 sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (SInt s) = Just $ Symbol { symbolName = s }
+sexprToAST (SInt s) = Just $ AInt s
+sexprToAST (SSym s) = Just $ ASym s
+sexprToAST (SList [SSym "define", SSym var, valExpr]) =
+    case sexprToAST valExpr of
+        Just exprVal -> Just $ Define var exprVal
+        _            -> Nothing
+sexprToAST _ = Nothing
 
 main :: IO ()
 main = do
@@ -68,8 +74,9 @@ main = do
         expr5 = SSym "+"
         expr6 = SSym "y"
         expr7 = SList [expr5, expr2, expr3]
-        expr4 = SList [expr1, expr6, expr7]
+        expr4 = SList [expr1, expr6, expr2]
     putStrLn $ "Symbol 1: " ++ show (getSymbol expr1)
     putStrLn $ "Symbol 2: " ++ show (getInteger expr2)
     putStrLn $ "Symbol 3: " ++ show (getList expr3)
     putStrLn $ "Exo 3:" ++ show (printTree expr4)
+    putStrLn $ "Exo 3 AST:" ++ show (sexprToAST expr4)
