@@ -5,6 +5,23 @@
 -- parser
 --
 
+data SExpr  = SInt Int
+            | SSym String
+            | SList [SExpr]
+            deriving (Show)
+
+sExprParser :: String -> [SExpr]
+sExprParser str = strArrayToSExpr (sexprSplit str)
+
+strArrayToSExpr :: [String] -> [SExpr]
+strArrayToSExpr [] = []
+strArrayToSExpr ("(" : xs) = (SList (strArrayToSExpr (getInsideParentheses(("(" : xs)))) : strArrayToSExpr (removeParenthesis ("(" : xs) 0))
+strArrayToSExpr (x : xs) = (strToSExpr x : strArrayToSExpr xs )
+
+strToSExpr :: String -> SExpr
+strToSExpr str  | isInt str == True = SInt (read str :: Int)
+                | otherwise = SSym str
+
 sexprSplit :: String -> [String]
 sexprSplit input = cleanStrings (cleanStrings (separateCharOnList (separateCharOnList (strSplit input ' ') '(') ')') "") "\n"
 
@@ -43,6 +60,13 @@ getParenthesis (")" : xs) 1 = [")"]
 getParenthesis (x : xs) i   | x == "(" = (x : getParenthesis xs (i + 1))
                             | x == ")" = (x : getParenthesis xs (i - 1))
                             | otherwise = (x : getParenthesis xs i)
+
+removeParenthesis :: [String] -> Int -> [String]
+removeParenthesis [] _ = []
+removeParenthesis (")" : xs) 1 = xs
+removeParenthesis (x : xs) i   | x == "(" = (removeParenthesis xs (i + 1))
+                            | x == ")" = (removeParenthesis xs (i - 1))
+                            | otherwise = (removeParenthesis xs i)
 
 removeLast :: [String] -> [String]
 removeLast (x : y : []) = (x : [])
