@@ -70,7 +70,7 @@ removeParenthesis (x : xs) i   | x == "(" = (removeParenthesis xs (i + 1))
 
 removeLast :: [String] -> [String]
 removeLast [] = []
-removeLast [x] = [x]
+removeLast [_] = []
 removeLast (x : _ : []) = [x]
 removeLast (x : xs) = x : removeLast xs
 

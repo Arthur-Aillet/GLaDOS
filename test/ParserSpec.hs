@@ -14,4 +14,8 @@ parserTests :: Test
 parserTests = TestList [testFoo]
 
 removeLastTests :: Test
-removeLastTests = "remove last element of [String]: " ~: assertEqual "Should return [\"hello\"]" (removeLast ["hello", "world"]) ["hello"]
+removeLastTests = "Remove last element of [String]" ~: do
+    assertEqual "Empty array: " (removeLast []) []
+    assertEqual "Array of 1 element: " (removeLast [")"]) []
+    assertEqual "Array of 2 elements: " (removeLast ["hello", ")"]) ["hello"]
+    assertEqual "Array of 3 elements: " (removeLast ["hello", "world", ")"]) ["hello", "world"]
