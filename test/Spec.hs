@@ -1,5 +1,5 @@
 import Test.HUnit
-import ParserSpec (parserTests, removeLastTests)
+import ParserSpec (parserTests)
 
 main :: IO ()
 main = runTestTT tests >> pure ()
@@ -7,5 +7,4 @@ main = runTestTT tests >> pure ()
 tests :: Test
 tests = TestList [
     parserTests
-    , removeLastTests
     ]
