@@ -12,6 +12,7 @@ import System.Environment (getArgs, getProgName)
 import System.IO (stdin, hGetContents', hIsTerminalDevice)
 import System.Timeout (timeout)
 import System.Exit
+import SParser (sExprParser, SExpr)
 
 -- print the command line, with exec name and all args seperated by a space
 -- note the lack of quoting for params containing a space
@@ -40,6 +41,13 @@ cat = do
 scraper :: IO ()
 scraper =  putStrLn "cmd:" >> cmd >> putStrLn "cat:" >> cat
 
+-- feed stdin directly into parser and show the converted result
+main2 :: IO ExitCode
+main2 = do
+    expr <- testInput
+    print expr
+    exitSuccess
+
 -- wrap the scraper in a timeout loop to prevent apparent crash should
 --  measures to avoid waiting on input to fail
 main :: IO ExitCode
@@ -48,3 +56,8 @@ main = do
     case status of
         Just () -> exitSuccess
         Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
+
+testInput :: IO [SExpr]
+testInput = do
+    contents <- hGetContents' stdin
+    return $ sExprParser contents
