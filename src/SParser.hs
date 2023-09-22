@@ -45,14 +45,6 @@ sexprSplit input = clean (clean (separateCharOnList (separateCharOnList (split '
 
 isBetween :: (Ord a, Eq a) => a -> a -> a -> Bool
 isBetween a b c = (a >= b) && (a <= c )
--- isBetween c smaller bigger  | c > bigger = False
---                             | c < smaller = False
---                             | otherwise = True
-
--- strSplit :: String -> Char -> [String]
--- strSplit [] _ = [""]
--- strSplit (x : xs) c | x == c = ("" : strSplit xs c)
---                     | otherwise = (x : head (strSplit xs c)) : tail (strSplit xs c)
 
 separateChar :: String -> Char -> [String]
 separateChar [] _ = [""]
@@ -65,11 +57,6 @@ separateCharOnList (x : xs) c = separateChar x c ++ separateCharOnList xs c
 
 clean :: (Eq a) => [a] -> a -> [a]
 clean xs match = filter (match /= ) xs
-
--- cleanStrings :: [String] -> String -> [String]
--- cleanStrings [] _ = []
--- cleanStrings (x : xs) str   | x == str = cleanStrings xs str
---                             | otherwise = (x : cleanStrings xs str)
 
 getParenthesis :: [String] -> Int -> [String]
 getParenthesis [] _ = []
@@ -84,13 +71,6 @@ removeParenthesis (")" : xs) 1 = xs
 removeParenthesis (x : xs) i   | x == "(" = (removeParenthesis xs (i + 1))
                             | x == ")" = (removeParenthesis xs (i - 1))
                             | otherwise = (removeParenthesis xs i)
-
--- removeLast :: [String] -> [String]
--- removeLast (x : y : []) = (x : [])
--- removeLast (x : xs) = (x : removeLast xs)
-
--- removeFirstAndLAst :: [String] -> [String]
--- removeFirstAndLAst (x : xs) = init xs
 
 getInsideParentheses :: [String] -> [String]
 getInsideParentheses str = init $ tail (getParenthesis str 0)
