@@ -22,8 +22,9 @@ sExprParser str = strArrayToSExpr (sexprSplit str)
 
 strArrayToSExpr :: [String] -> [SExpr]
 strArrayToSExpr [] = []
-strArrayToSExpr ("(" : xs) = (SList (strArrayToSExpr (getInsideParentheses(("(" : xs)))) : strArrayToSExpr (removeParenthesis ("(" : xs) 0))
--- TODO: split this function with where statements for legibility
+strArrayToSExpr ("(" : xs) = (SList (strArrayToSExpr inParenthesis) : strArrayToSExpr withoutParenthesis)
+    where   inParenthesis = (getInsideParentheses(("(" : xs)))
+            withoutParenthesis = (removeParenthesis ("(" : xs) 0)
 strArrayToSExpr (x : xs) = (readSExpr x : strArrayToSExpr xs )
 
 
@@ -40,8 +41,10 @@ readSExpr str = case (readMaybe str :: Maybe Int, readMaybe str :: Maybe Float, 
                     _ -> SSym str
 
 sexprSplit :: String -> [String]
-sexprSplit input = clean (clean (separateCharOnList (separateCharOnList (split ' ' input) '(') ')') "") "\n"
--- TODO: split this function with where statements for legibility
+sexprSplit input = cleanedUp
+    where   cleanedUp = clean (clean (splitIntput) "") "\n"
+            splitIntput = separateCharOnList (separateCharOnList spaceSplitInput '(') ')'
+            spaceSplitInput = (split ' ' input)
 
 isBetween :: (Ord a, Eq a) => a -> a -> a -> Bool
 isBetween a b c = (a >= b) && (a <= c )
