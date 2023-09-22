@@ -24,3 +24,5 @@ cabal.project.local~
 glados
 ignore/
 .vscode
+test/coverage/*
+!test/coverage/.gitkeep
