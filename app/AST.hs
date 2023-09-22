@@ -38,9 +38,8 @@ evalAST ctx (Truth t) = (ctx, Truth t)
 evalAST ctx (Call expr args) = execCall ctx expr args
 evalAST ctx (Builtin name args) = (ctx, execBuiltins ctx name args)
 evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
-    Truth True -> evalAST ctx _then
     Truth False -> evalAST ctx _else
-    x -> (ctx, Error $ "Condition '" ++ show _if ++ "' is invalid")
+    _ -> evalAST ctx _then
 evalAST ctx x = (ctx, x)
 
 expectAtom :: (Context, Ast) -> Ast
