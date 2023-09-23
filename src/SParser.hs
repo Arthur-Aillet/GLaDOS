@@ -5,7 +5,21 @@
 -- parser
 --
 
-module SParser where
+module SParser
+        (SExpr (SInt, SBool, SFloat, SSym, SList)
+        ,sExprParser
+        , strArrayToSExpr
+        , readSExpr
+        , sexprSplit
+        , isBetween
+        , removeParenthesis
+        , getParenthesis
+        , getInsideParentheses
+        , readBool
+        , separateChar
+        , separateCharOnList
+        , clean
+        ) where
 
 import Text.Read (readMaybe)
 import GHC.Utils.Misc (split)
@@ -15,7 +29,7 @@ data SExpr  = SInt Int
             | SFloat Float
             | SSym String
             | SList [SExpr]
-            deriving (Show)
+            deriving (Show, Eq)
 
 sExprParser :: String -> [SExpr]
 sExprParser str = strArrayToSExpr (sexprSplit str)
@@ -46,7 +60,7 @@ sexprSplit input = cleanedUp
             splitIntput = separateCharOnList (separateCharOnList spaceSplitInput '(') ')'
             spaceSplitInput = (split ' ' input)
 
-isBetween :: (Ord a, Eq a) => a -> a -> a -> Bool
+isBetween :: (Ord a) => a -> a -> a -> Bool
 isBetween a b c = (a >= b) && (a <= c )
 
 separateChar :: String -> Char -> [String]
@@ -63,7 +77,7 @@ clean xs match = filter (match /= ) xs
 
 getParenthesis :: [String] -> Int -> [String]
 getParenthesis [] _ = []
-getParenthesis (")" : xs) 1 = [")"]
+getParenthesis (")" : _) 1 = [")"]
 getParenthesis (x : xs) i   | x == "(" = (x : getParenthesis xs (i + 1))
                             | x == ")" = (x : getParenthesis xs (i - 1))
                             | otherwise = (x : getParenthesis xs i)
