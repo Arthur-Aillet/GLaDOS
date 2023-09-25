@@ -1,8 +1,0 @@
-cradle:
-  stack:
-    - path: ./src
-      component: "glados:lib"
-    - path: ./test
-      component: "glados:test:glados-test"
-    - path: ./app
-      component: "glados:exe:glados"
