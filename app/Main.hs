@@ -5,7 +5,9 @@
 -- GLaDOS scraper Main file
 --
 
-data Result a = Ok a | Err String
+data Position = Position { line :: Int, char :: Int }
 
-type Parser a = String -> Result (String, a)
+data Result a b = Ok a | Err b
+
+type Parser a = String -> Result (a, String, Position) (String, Position)
 
