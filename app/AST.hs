@@ -1,6 +1,6 @@
-module AST where
+module AST (Ast, evalAST) where
 
-import Data.HashMap.Lazy (HashMap, insert, empty, (!?))
+import Data.HashMap.Lazy (HashMap, insert, (!?))
 
 data Ast = Error String             -- error type with string detail
         | Null                      -- No-Op or resolved expression leaving no value
@@ -18,11 +18,31 @@ data Ast = Error String             -- error type with string detail
 
 type Context = (HashMap String Ast)
 
+execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
+execCallDistribute ctx [] [] = Just ctx
+execCallDistribute ctx (s:ss) (x:xs) = case execCallDistribute ctx ss xs of
+    Just next -> Just $ insert s x next
+    Nothing -> Nothing
+execCallDistribute _ _ _ = Nothing
+
+
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
-execCall ctx call args = (ctx, Error "unimplemented")
+execCall ctx call args = (ctx, case evalAST ctx call of
+        (ctx2, Lambda bindings expr) -> case execCallDistribute ctx2 bindings args of
+            Just jLocalCtx -> snd (evalAST jLocalCtx expr)
+            Nothing ->  Error "incorrect number or args to lambda"
+        _ ->  Error "call to non-procedure"
+    )
 
 execBuiltins :: Context -> String -> [Ast] -> Ast
-execBuiltins ctx call args = Error "unimplemented"
+execBuiltins ctx "<" xs = builtinLt ctx xs
+execBuiltins ctx "eq?" xs = builtinEq ctx xs
+execBuiltins ctx "+" xs = binOp (+) ctx xs
+execBuiltins ctx "-" xs = binOp (-) ctx xs
+execBuiltins ctx "*" xs = binOp (*) ctx xs
+execBuiltins ctx "div" xs = builtinDiv ctx xs
+execBuiltins ctx "mod" xs = builtinMod ctx xs
+execBuiltins _ call _ = Error ("unimplemented builtin: " ++ call)
 
 evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
@@ -43,24 +63,52 @@ evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
 evalAST ctx x = (ctx, x)
 
 expectAtom :: (Context, Ast) -> Ast
-expectAtom (ctx, Atom i) = Atom i
-expectAtom (ctx, Truth t) = Truth t
-expectAtom (ctx, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
-expectAtom (ctx, Error string) = Error string
-expectAtom (ctx, x) = Error ("expected Atom but got: " ++ show x)
+expectAtom (_, Atom i) = Atom i
+expectAtom (_, Truth t) = Truth t
+expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
+expectAtom (_, Error string) = Error string
+expectAtom (_, x) = Error ("expected Atom but got: " ++ show x)
 
-eqQ :: Context -> [Ast] -> Ast
-eqQ ctx [a, b] = case expectAtom (evalAST ctx a) of
+binOp :: (Int -> Int -> Int) -> Context -> [Ast] -> Ast
+binOp op ctx [a, b] = case expectAtom (evalAST ctx a) of
+    Atom ia -> case expectAtom (evalAST ctx b) of
+        Atom ib -> Atom (op ia ib)
+        x -> x
+    x -> x
+binOp _ _ _ = Error "Bad number of args to eq?"
+
+builtinEq :: Context -> [Ast] -> Ast
+builtinEq ctx [a, b] = case expectAtom (evalAST ctx a) of
     Atom ia -> case expectAtom (evalAST ctx b) of
         Atom ib -> Truth (ia == ib)
         x -> x
     x -> x
-eqQ _ _ = Error "Bad number of args to eq?"
+builtinEq _ _ = Error "Bad number of args to eq?"
 
-lt :: Context -> [Ast] -> Ast
-lt ctx [a, b] = case expectAtom (evalAST ctx a) of
+builtinLt :: Context -> [Ast] -> Ast
+builtinLt ctx [a, b] = case expectAtom (evalAST ctx a) of
     Atom ia -> case expectAtom (evalAST ctx b) of
         Atom ib -> Truth (ia < ib)
         x -> x
     x -> x
-lt _ _ = Error "Bad number of args to <"
+builtinLt _ _ = Error "Bad number of args to <"
+
+builtinDiv :: Context -> [Ast] -> Ast
+builtinDiv ctx [a, b] = case expectAtom (evalAST ctx a) of
+    Atom ia -> case expectAtom (evalAST ctx b) of
+        Atom ib -> if ib == 0
+            then Error "division by zero"
+            else Atom (ia `div` ib)
+        x -> x
+    x -> x
+builtinDiv _ _ = Error "Bad number of args to <"
+
+builtinMod :: Context -> [Ast] -> Ast
+builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
+    Atom ia -> case expectAtom (evalAST ctx b) of
+        Atom ib -> if ib == 0
+            then Error "modulo by zero"
+            else Atom (ia `mod` ib)
+        x -> x
+    x -> x
+builtinMod _ _ = Error "Bad number of args to <"
