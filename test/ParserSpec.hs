@@ -2,6 +2,7 @@ module ParserSpec (
   parserTests
 ) where
 
+import Test.HUnit
 import SParser (SExpr (SInt, SBool, SFloat, SSym, SList)
         ,sExprParser
         , strArrayToSExpr
@@ -16,7 +17,6 @@ import SParser (SExpr (SInt, SBool, SFloat, SSym, SList)
         , separateCharOnList
         , clean
         )
-import Test.HUnit
 
 parserTests :: Test
 parserTests = TestList
@@ -99,19 +99,22 @@ getParenthesisTests :: Test
 getParenthesisTests = TestList
   [ "getParenthesis: Empty array" ~: assertEqual "Should return []" (getParenthesis [] 0) []
   , "getParenthesis: Array with 1 closing parenthesis" ~: assertEqual "Should return [\")\"]" (getParenthesis [")"] 1) [")"]
+  , "getParenthesis: Array with 1 opening parenthesis" ~: assertEqual "Should return [\"(\"]" (getParenthesis ["("] 1) ["("]
   , "getParenthesis: Array with 2 opening and 2 closing parentheses" ~: assertEqual "Should return [\"(\", \")\"]" (getParenthesis ["(", ")", "(", ")"] 0) ["(", ")"]
+  , "getParenthesis: Array with no parentheses" ~: assertEqual "Should return [\"1\", \"2\", \"1\", \"2\"]" (getParenthesis ["1", "2", "1", "2"] 0) ["1", "2", "1", "2"]
+  , "getParenthesis: Array with 1 pair of parentheses" ~: assertEqual "Should return [\"(\", \"1\", \"2\" , \"1\", \"2\", \")\"]" (getParenthesis ["(", "1", "2" , "1", "2", ")"] 0) ["(", "1", "2" , "1", "2", ")"]
   ]
 
 removeParenthesisTests :: Test
 removeParenthesisTests = TestList
   [ "removeParenthesis: Test1" ~: assertEqual "Should return without parentheses" (removeParenthesis ["(", "1", ")", "2", "3", "(", "4", ")", ")"] 0) ["2", "3", "(", "4", ")", ")"]
-  , "removeParenthesis: Empty Array" ~: assertEqual "Should be return []" (removeParenthesis [] 0) []
-  , "removeParenthesis: No Parenthesis" ~: assertEqual "Should be return the same array" (removeParenthesis ["1", "2", "3", "4"] 0) ["1", "2", "3", "4"]
+  , "removeParenthesis: Empty Array" ~: assertEqual "Should be return []" (removeParenthesis [""] 0) []
+  , "removeParenthesis: No Parenthesis" ~: assertEqual "Should be return the same array" (removeParenthesis ["1", "2", "3", "4"] 0) []
   ]
 
 getInsideParenthesesTests :: Test
 getInsideParenthesesTests = TestList
   [ "getInsideParentheses: Test1" ~: assertEqual "Should return inside parentheses" (getInsideParentheses ["(", "1", "2", ")", "3", "(", "4", ")"]) ["1", "2"]
-  , "getInsideParentheses: No parentheses" ~: assertEqual "Should return empty array" (getInsideParentheses ["1", "2", "3"]) []
+  , "getInsideParentheses: No parentheses" ~: assertEqual "Should return empty array" (getInsideParentheses ["1", "2", "3"]) ["1", "2", "3"]
   , "getInsideParentheses: Empty Array" ~: assertEqual "Should return empty array" (getInsideParentheses []) []
   ]
