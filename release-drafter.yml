@@ -6,6 +6,8 @@ categories:
       - 'feature'
       - 'feat'
       - 'enhancement'
+  - title: '📖 Documentation'
+      labels: 'documentation'
   - title: '🐛 Bug Fixes'
     labels:
       - 'fix'
