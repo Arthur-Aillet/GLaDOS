@@ -1,2 +1,10 @@
+import Test.HUnit
+import ParserSpec (parserTests)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = runTestTT tests >> pure ()
+
+tests :: Test
+tests = TestList [
+    parserTests
+    ]

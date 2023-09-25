@@ -47,7 +47,6 @@ testInput = do
     contents <- hGetContents' stdin
     return $ sExprParser contents
 
--- feed stdin directly into parser and show the converted result
 main :: IO ExitCode
 main = do
     expr <- testInput

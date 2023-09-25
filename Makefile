@@ -21,4 +21,10 @@ re: fclean all
 quick:
 	ghc app/*.hs src/*.hs -o $(NAME)
 
-.PHONY: all clean fclean re quick
+test-run:
+	stack test --pedantic --coverage
+	stack hpc report --all --destdir test/coverage
+
+test: test-run
+
+.PHONY: all clean fclean re quick test-run

@@ -1,6 +1,6 @@
 name:                glados
 version:             0.1.0.0
-github:              "Arthur-Aillet/GLaDOSs"
+github:              "Arthur-Aillet/GLaDOS"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"
@@ -58,4 +58,5 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - HUnit
     - glados
