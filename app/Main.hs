@@ -70,3 +70,9 @@ parseAndWith fnct first second string pos = case parseAnd first second string po
     Left a -> Left a
     Right ((a, b), new_string, new_pos) -> Right (fnct a b, new_string, new_pos)
 
+parseMany :: Parser a -> Parser [a]
+parseMany parse string pos = case parse string pos of
+    Right (elem, new_string, new_pos) -> case parseMany parse new_string new_pos of
+        Left _ -> Right ([], new_string, new_pos)
+        Right (found, found_string, found_pos) -> Right (found ++ [elem], found_string, found_pos)
+    Left _ -> Right ([], string, pos)
