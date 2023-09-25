@@ -7,7 +7,15 @@
 
 data Position = Position { line :: Int, char :: Int }
 
-type Parser a = String -> Either (String, Position) (a, String, Position)
+moveCursor :: Position -> Bool -> Position
+moveCursor current True = Position { line = line current + 1, char = char current }
+moveCursor current False =  Position { line = line current, char = char current + 1 }
+
+type Parser a = String -> Position -> Either (String, Position) (a, String, Position)
 
 parseChar :: Char -> Parser Char
-parseChar _ _ = Right ('a', "atest", Position { line = 1, char = 2 })
+parseChar '\n' ('\n':_) current = Right ('a', "atest", moveCursor current True)
+parseChar char (x:xs) current
+    | char == x = Right (x, xs, moveCursor current False)
+    | otherwise = Left ( "Invalid char found", current )
+parseChar _ _ current = Left ( "Invalid char found", current )
