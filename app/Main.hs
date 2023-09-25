@@ -7,7 +7,7 @@
 
 data Position = Position { line :: Int, char :: Int }
 
-data Result a b = Ok a | Err b
+type Parser a = String -> Either (String, Position) (a, String, Position)
 
-type Parser a = String -> Result (a, String, Position) (String, Position)
-
+parseChar :: Char -> Parser Char
+parseChar _ _ = Right ('a', "atest", Position { line = 1, char = 2 })
