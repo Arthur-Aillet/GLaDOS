@@ -98,3 +98,16 @@ parseUInt string pos = case parseSome parseDigit string pos of
         Nothing -> Left ( "Invalid digit found", pos )
         Just found_int -> Right ( found_int, found_string, found_pos )
     Left a -> Left a
+
+parseInt :: Parser Int
+parseInt string pos = case parseChar '-' string pos of
+    Right (_, fst_string, fst_pos) -> case parseSome parseDigit fst_string fst_pos of
+        Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
+            Nothing -> Left ( "Invalid digit found", pos )
+            Just found_int -> Right ( found_int, snd_string, snd_pos )
+        Left a -> Left a
+    Left _ -> case parseSome parseDigit string pos of
+        Right (found, found_string, found_pos) -> case readMaybe found of
+            Nothing -> Left ( "Invalid digit found", pos )
+            Just found_int -> Right ( found_int, found_string, found_pos )
+        Left a -> Left a
