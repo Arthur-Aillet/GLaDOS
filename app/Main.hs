@@ -61,6 +61,12 @@ parseMultipleExclusif list string current = allValidOrFirstError (map (\x -> x s
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
 parseAnd first second string pos = case first string pos of
     Left a -> Left a
-    Right (element, new_string, new_pos) -> case second new_string new_pos of 
+    Right (element, new_string, new_pos) -> case second new_string new_pos of
         Left a -> Left a
-        Right (snd_elem, final_string, final_pos) -> Right((element, snd_elem), final_string, final_pos)
+        Right (snd_elem, final_string, final_pos) -> Right ((element, snd_elem), final_string, final_pos)
+
+parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
+parseAndWith fnct first second string pos = case parseAnd first second string pos of
+    Left a -> Left a
+    Right ((a, b), new_string, new_pos) -> Right (fnct a b, new_string, new_pos)
+
