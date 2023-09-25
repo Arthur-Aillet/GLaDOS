@@ -26,3 +26,4 @@ ignore/
 .vscode
 test/coverage/*
 !test/coverage/.gitkeep
+*.cabal
