@@ -1,6 +1,6 @@
 module Lib
-    ( someFunc
+    ( foo
     ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+foo::Int ->Int
+foo = (+1)

@@ -1,0 +1,25 @@
+name: protect-pull-request
+run-name: ${{ github.actor }} is testing out our GLaDOS 🚀
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Haskell
+        uses: haskell/actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - name: Build and run tests
+        run: "stack test --fast --no-terminal --system-ghc"

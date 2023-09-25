@@ -25,4 +25,5 @@ glados
 ignore/
 .vscode
 *.cabal
-test/coverage/
+test/coverage/*
+!test/coverage/.gitkeep
