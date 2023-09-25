@@ -5,13 +5,15 @@
 -- GLaDOS scraper Main file
 -}
 
-
 module Main (main) where
 
 import System.Environment (getArgs, getProgName)
 import System.IO (stdin, hGetContents', hIsTerminalDevice)
 import System.Timeout (timeout)
 import System.Exit
+import SParser (sExprParser, SExpr)
+import Converter (sexprToAST)
+import AST (evalAST, Context, emptyContext)
 
 -- print the command line, with exec name and all args seperated by a space
 -- note the lack of quoting for params containing a space
@@ -40,10 +42,29 @@ cat = do
 scraper :: IO ()
 scraper =  putStrLn "cmd:" >> cmd >> putStrLn "cat:" >> cat
 
--- wrap the scraper in a timeout loop to prevent apparent crash should
---  measures to avoid waiting on input to fail
+testInput :: IO [SExpr]
+testInput = do
+    contents <- hGetContents' stdin
+    return $ sExprParser contents
+
+-- feed stdin directly into parser and show the converted result
 main :: IO ExitCode
 main = do
+    expr <- testInput
+    loopOnCommands emptyContext expr
+
+loopOnCommands :: Context -> [SExpr] -> IO ExitCode
+loopOnCommands _ [] = exitSuccess
+loopOnCommands ctx (expr:xs) = case sexprToAST expr of
+    Just ast -> print res >> loopOnCommands newCtx xs
+        where (newCtx, res) = evalAST ctx ast
+    Nothing -> exitWith (ExitFailure 84)
+
+
+-- wrap the scraper in a timeout loop to prevent apparent crash should
+--  measures to avoid waiting on input to fail
+main2 :: IO ExitCode
+main2 = do
     status <- timeout (10 * 1000 * 1000) scraper
     case status of
         Just () -> exitSuccess
