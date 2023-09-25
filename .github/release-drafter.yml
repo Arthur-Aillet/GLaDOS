@@ -7,7 +7,7 @@ categories:
       - 'feat'
       - 'enhancement'
   - title: '📖 Documentation'
-      labels: 'documentation'
+    labels: 'documentation'
   - title: '🐛 Bug Fixes'
     labels:
       - 'fix'
