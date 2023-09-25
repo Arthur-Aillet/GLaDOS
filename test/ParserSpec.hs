@@ -105,9 +105,13 @@ getParenthesisTests = TestList
 removeParenthesisTests :: Test
 removeParenthesisTests = TestList
   [ "removeParenthesis: Test1" ~: assertEqual "Should return without parentheses" (removeParenthesis ["(", "1", ")", "2", "3", "(", "4", ")", ")"] 0) ["2", "3", "(", "4", ")", ")"]
+  , "removeParenthesis: Empty Array" ~: assertEqual "Should be return []" (removeParenthesis [] 0) []
+  , "removeParenthesis: No Parenthesis" ~: assertEqual "Should be return the same array" (removeParenthesis ["1", "2", "3", "4"] 0) ["1", "2", "3", "4"]
   ]
 
 getInsideParenthesesTests :: Test
 getInsideParenthesesTests = TestList
   [ "getInsideParentheses: Test1" ~: assertEqual "Should return inside parentheses" (getInsideParentheses ["(", "1", "2", ")", "3", "(", "4", ")"]) ["1", "2"]
+  , "getInsideParentheses: No parentheses" ~: assertEqual "Should return empty array" (getInsideParentheses ["1", "2", "3"]) []
+  , "getInsideParentheses: Empty Array" ~: assertEqual "Should return empty array" (getInsideParentheses []) []
   ]
