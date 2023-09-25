@@ -32,6 +32,8 @@ parserTests = TestList
           , separateCharTests
           , separateCharOnListTests
           , cleanTests
+          , showTests
+          , eqTests
           ]
 
 cleanTests :: Test
@@ -118,3 +120,13 @@ getInsideParenthesesTests = TestList
   , "getInsideParentheses: No parentheses" ~: assertEqual "Should return empty array" (getInsideParentheses ["1", "2", "3"]) ["1", "2", "3"]
   , "getInsideParentheses: Empty Array" ~: assertEqual "Should return empty array" (getInsideParentheses []) []
   ]
+
+showTests :: Test
+showTests = TestList
+  [ "show: Test1" ~: assertEqual "Should show SExpr" (show (SList [SInt 1, SBool True, SFloat 2.5, SSym "a"])) "SList [SInt 1,SBool True,SFloat 2.5,SSym \"a\"]"
+  , "show: empty list" ~: assertEqual "Should show SList []" (show (SList [])) "SList []"]
+
+eqTests :: Test
+eqTests = TestList
+  [ "eq: equal" ~: assertEqual "Should eq SExpr" (SList [SInt 1] == SList [SInt 1]) True
+  , "eq: different" ~: assertEqual "Should not eq SExor" (SList [] /= SBool False) True ]
