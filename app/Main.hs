@@ -48,3 +48,19 @@ parseMultipleInclusif list string current = validOrFirstError (map (\x -> x stri
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr first second = parseMultipleInclusif [first, second]
+
+allValidOrFirstError :: [ParserOutput a] -> Position -> ParserOutput a
+allValidOrFirstError [] current = Left ("Empty list", current)
+allValidOrFirstError list _
+    | all isRight list = head list
+    | otherwise = Left (head (lefts list))
+
+parseMultipleExclusif :: [Parser a] -> Parser a
+parseMultipleExclusif list string current = allValidOrFirstError (map (\x -> x string current) list) current
+
+parseAnd :: Parser a -> Parser b -> Parser (a, b)
+parseAnd first second string pos = case first string pos of
+    Left a -> Left a
+    Right (element, new_string, new_pos) -> case second new_string new_pos of 
+        Left a -> Left a
+        Right (snd_elem, final_string, final_pos) -> Right((element, snd_elem), final_string, final_pos)
