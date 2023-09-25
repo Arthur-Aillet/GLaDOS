@@ -14,7 +14,7 @@ moveCursor current False =  Position { line = line current, char = char current 
 type Parser a = String -> Position -> Either (String, Position) (a, String, Position)
 
 parseChar :: Char -> Parser Char
-parseChar '\n' ('\n':_) current = Right ('a', "atest", moveCursor current True)
+parseChar '\n' ('\n':xs) current = Right ('\n', xs, moveCursor current True)
 parseChar char (x:xs) current
     | char == x = Right (x, xs, moveCursor current False)
     | otherwise = Left ( "Invalid char found", current )
