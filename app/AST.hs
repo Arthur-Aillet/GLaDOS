@@ -1,6 +1,11 @@
-module AST (Ast, evalAST) where
+module AST (
+    Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
+    evalAST,
+    Context,
+    emptyContext)
+where
 
-import Data.HashMap.Lazy (HashMap, insert, (!?))
+import Data.HashMap.Lazy (HashMap, insert, (!?), empty)
 
 data Ast = Error String             -- error type with string detail
         | Null                      -- No-Op or resolved expression leaving no value
@@ -18,6 +23,9 @@ data Ast = Error String             -- error type with string detail
 
 type Context = (HashMap String Ast)
 
+emptyContext :: Context
+emptyContext = empty
+
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
 execCallDistribute ctx (s:ss) (x:xs) = case execCallDistribute ctx ss xs of
@@ -31,7 +39,11 @@ execCall ctx call args = (ctx, case evalAST ctx call of
         (ctx2, Lambda bindings expr) -> case execCallDistribute ctx2 bindings args of
             Just jLocalCtx -> snd (evalAST jLocalCtx expr)
             Nothing ->  Error "incorrect number or args to lambda"
-        _ ->  Error "call to non-procedure"
+        (_, Symbol sym) -> if isBuiltin sym then
+            execBuiltins ctx sym args
+            else
+                 Error "call to non-procedure"
+        _ -> Error "call to non-procedure"
     )
 
 execBuiltins :: Context -> String -> [Ast] -> Ast
@@ -44,12 +56,25 @@ execBuiltins ctx "div" xs = builtinDiv ctx xs
 execBuiltins ctx "mod" xs = builtinMod ctx xs
 execBuiltins _ call _ = Error ("unimplemented builtin: " ++ call)
 
+isBuiltin :: String -> Bool
+isBuiltin "<" = True
+isBuiltin "eq?" = True
+isBuiltin "+" = True
+isBuiltin "-" = True
+isBuiltin "*" = True
+isBuiltin "div" = True
+isBuiltin "mod" = True
+isBuiltin _ = False
+
 evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
 evalAST ctx (Null) = (ctx, Error "expression has no value")
 evalAST ctx (Symbol sym) = case ctx !? sym of
     Just jast -> evalAST ctx jast
-    Nothing -> (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
+    Nothing -> if isBuiltin sym then
+            (ctx, Symbol sym)
+        else
+            (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
 evalAST ctx (Define name x) = (insert name val ctx2, Null)
     where (ctx2, val) = evalAST ctx x
 evalAST ctx (Atom i) = (ctx, Atom i)
@@ -75,7 +100,7 @@ binOp op ctx [a, b] = case expectAtom (evalAST ctx a) of
         Atom ib -> Atom (op ia ib)
         x -> x
     x -> x
-binOp _ _ _ = Error "Bad number of args to eq?"
+binOp _ _ _ = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
 builtinEq ctx [a, b] = case expectAtom (evalAST ctx a) of
@@ -101,7 +126,7 @@ builtinDiv ctx [a, b] = case expectAtom (evalAST ctx a) of
             else Atom (ia `div` ib)
         x -> x
     x -> x
-builtinDiv _ _ = Error "Bad number of args to <"
+builtinDiv _ _ = Error "Bad number of args to div"
 
 builtinMod :: Context -> [Ast] -> Ast
 builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
@@ -111,4 +136,4 @@ builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
             else Atom (ia `mod` ib)
         x -> x
     x -> x
-builtinMod _ _ = Error "Bad number of args to <"
+builtinMod _ _ = Error "Bad number of args to mod"
