@@ -74,9 +74,9 @@ parseAndWith fnct first second string pos = case parseAnd first second string po
 
 parseMany :: Parser a -> Parser [a]
 parseMany parse string pos = case parse string pos of
-    Right (elem, new_string, new_pos) -> case parseMany parse new_string new_pos of
+    Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
         Left _ -> Right ([], new_string, new_pos)
-        Right (found, found_string, found_pos) -> Right (found ++ [elem], found_string, found_pos)
+        Right (found, found_string, found_pos) -> Right (found ++ [element], found_string, found_pos)
     Left _ -> Right ([], string, pos)
 
 parseSome :: Parser a -> Parser [a]
@@ -100,14 +100,13 @@ parseUInt string pos = case parseSome parseDigit string pos of
     Left a -> Left a
 
 parseInt :: Parser Int
-parseInt string pos = case parseChar '-' string pos of
-    Right (_, fst_string, fst_pos) -> case parseSome parseDigit fst_string fst_pos of
-        Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
-            Nothing -> Left ( "Invalid digit found", pos )
-            Just found_int -> Right ( found_int, snd_string, snd_pos )
-        Left a -> Left a
-    Left _ -> case parseSome parseDigit string pos of
-        Right (found, found_string, found_pos) -> case readMaybe found of
-            Nothing -> Left ( "Invalid digit found", pos )
-            Just found_int -> Right ( found_int, found_string, found_pos )
-        Left a -> Left a
+parseInt ('-':xs) pos = case parseSome parseDigit xs (moveCursor pos False) of
+    Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
+        Nothing -> Left ( "Invalid digit found", pos )
+        Just found_int -> Right ( found_int, snd_string, snd_pos )
+    Left a -> Left a
+parseInt string pos = case parseSome parseDigit string pos of
+    Right (found, found_string, found_pos) -> case readMaybe found of
+        Nothing -> Left ( "Invalid digit found", pos )
+        Just found_int -> Right ( found_int, found_string, found_pos )
+    Left a -> Left a
