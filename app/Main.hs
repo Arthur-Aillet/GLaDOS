@@ -1,5 +1,7 @@
 import Data.Foldable (find)
 import Data.Either (rights, lefts, isRight)
+import Text.Read
+import Data.Char (isDigit)
 
 --
 -- EPITECH PROJECT, 2023
@@ -79,7 +81,20 @@ parseMany parse string pos = case parse string pos of
 
 parseSome :: Parser a -> Parser [a]
 parseSome parse string pos = case parse string pos of
-    Right (elem, new_string, new_pos) -> case parseMany parse new_string new_pos of
+    Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
         Left _ -> Right ([], new_string, new_pos)
-        Right (found, found_string, found_pos) -> Right (found ++ [elem], found_string, found_pos)
+        Right (found, found_string, found_pos) -> Right (element : found, found_string, found_pos)
+    Left a -> Left a
+
+parseDigit :: Parser Char
+parseDigit (x:xs) current
+    | isDigit x = Right (x, xs, moveCursor current False)
+    | otherwise = Left ( "Invalid digit found", current )
+parseDigit _ current = Left ( "Invalid digit found", current )
+
+parseUInt :: Parser Int
+parseUInt string pos = case parseSome parseDigit string pos of
+    Right (found, found_string, found_pos) -> case readMaybe found of
+        Nothing -> Left ( "Invalid digit found", pos )
+        Just found_int -> Right ( found_int, found_string, found_pos )
     Left a -> Left a
