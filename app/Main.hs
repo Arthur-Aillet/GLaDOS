@@ -115,7 +115,7 @@ parseInt string pos = case parseSome parseDigit string pos of
 parsePair :: Parser a -> Parser (a, a)
 parsePair parser ('(':xs) pos = case parseWithSpace parser xs (moveCursor pos False) of
     Right (found, snd_string, snd_pos) -> case parseWithSpace parser snd_string snd_pos of
-        Right (snd_found, for_string, for_pos) -> case parseChar ')' for_string for_pos of 
+        Right (snd_found, for_string, for_pos) -> case parseChar ')' for_string for_pos of
             Right (_, fif_string, fif_pos) -> Right ((found, snd_found), fif_string, fif_pos)
             Left (_, err_pos) -> Left ("Missing closing parenthesis", err_pos)
         Left a -> Left a
@@ -130,3 +130,18 @@ parseWithSpace parser string pos = case parseMany (parseChar ' ') string pos of
             Left a -> Left a
         Left a -> Left a
     Left a -> Left a
+
+parseOrDiff :: Parser a -> Parser b -> Parser (Either a b)
+parseOrDiff first second string pos = case (first string pos, second string pos) of
+    (Right (element, snd_string, snd_pos), Right _) -> Right (Left element, snd_string, snd_pos)
+    (Right (element, snd_string, snd_pos), Left _) -> Right (Left element, snd_string, snd_pos)
+    (Left _, Right (element, snd_string, snd_pos)) -> Right (Right element, snd_string, snd_pos)
+    (Left a, Left _) -> Left a
+
+parseList :: Parser a -> Parser [ a ]
+parseList parser ('(':xs) pos = case parseSome (parseWithSpace parser) xs (moveCursor pos False) of
+    Right (found, for_string, for_pos) -> case parseChar ')' for_string for_pos of
+        Right (_, fif_string, fif_pos) -> Right (found, fif_string, fif_pos)
+        Left (_, err_pos) -> Left ("Missing closing parenthesis", err_pos)
+    Left a -> Left a
+parseList _ _ pos = Left ("Missing opening parenthesis", pos)
