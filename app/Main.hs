@@ -1,7 +1,6 @@
 import Data.Foldable (find)
 import Data.Either (rights, lefts, isRight)
 import Text.Read
-import Data.Char (isDigit)
 
 --
 -- EPITECH PROJECT, 2023
@@ -69,46 +68,47 @@ parseAndWith fnct first second = Parser (\string pos -> case runParser (parseAnd
     Left a -> Left a
     )
 
-{-
 parseMany :: Parser a -> Parser [a]
-parseMany parse string pos = case parse string pos of
-    Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
+parseMany parse = Parser (\string pos -> case runParser parse string pos of
+    Right (element, new_string, new_pos) -> case runParser (parseMany parse) new_string new_pos of
         Left _ -> Right ([], new_string, new_pos)
         Right (found, found_string, found_pos) -> Right (element : found, found_string, found_pos)
     Left _ -> Right ([], string, pos)
+    )
 
 parseSome :: Parser a -> Parser [a]
-parseSome parse string pos = case parse string pos of
-    Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
+parseSome parse = Parser (\string pos -> case runParser parse string pos of
+    Right (element, new_string, new_pos) -> case runParser (parseMany parse) new_string new_pos of
         Left _ -> Right ([], new_string, new_pos)
         Right (found, found_string, found_pos) -> Right (element : found, found_string, found_pos)
     Left a -> Left a
+    )
 
 parseDigit :: Parser Char
-parseDigit (x:xs) current
-    | isDigit x = Right (x, xs, moveCursor current False)
-    | otherwise = Left ( "Invalid digit found", current )
-parseDigit _ current = Left ( "Invalid digit found", current )
+parseDigit = Parser (runParser (parseAnyChar ['0'..'9']))
 
 parseUInt :: Parser Int
-parseUInt string pos = case parseSome parseDigit string pos of
+parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string pos of
     Right (found, found_string, found_pos) -> case readMaybe found of
         Nothing -> Left ( "Invalid digit found", pos )
         Just found_int -> Right ( found_int, found_string, found_pos )
     Left a -> Left a
+    )
 
 parseInt :: Parser Int
-parseInt ('-':xs) pos = case parseSome parseDigit xs (moveCursor pos False) of
-    Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
-        Nothing -> Left ( "Invalid digit found", pos )
-        Just found_int -> Right ( found_int, snd_string, snd_pos )
-    Left a -> Left a
-parseInt string pos = case parseSome parseDigit string pos of
-    Right (found, found_string, found_pos) -> case readMaybe found of
-        Nothing -> Left ( "Invalid digit found", pos )
-        Just found_int -> Right ( found_int, found_string, found_pos )
-    Left a -> Left a
-
+parseInt = Parser (\string pos -> case string of
+    ('-':xs) -> case runParser (parseSome parseDigit) xs (moveCursor pos False) of
+        Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
+            Nothing -> Left ( "Invalid digit found", pos )
+            Just found_int -> Right ( found_int, snd_string, snd_pos )
+        Left a -> Left a
+    new_string -> case runParser (parseSome parseDigit) new_string pos of
+        Right (found, found_string, found_pos) -> case readMaybe found of
+            Nothing -> Left ( "Invalid digit found", pos )
+            Just found_int -> Right ( found_int, found_string, found_pos )
+        Left a -> Left a
+    )
+{-
 parsePair :: Parser a -> Parser (a, a)
 parsePair parser ('(':xs) pos = case parseWithSpace parser xs (moveCursor pos False) of
     Right (found, snd_string, snd_pos) -> case parseWithSpace parser snd_string snd_pos of
