@@ -77,7 +77,7 @@ parseMany :: Parser a -> Parser [a]
 parseMany parse string pos = case parse string pos of
     Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
         Left _ -> Right ([], new_string, new_pos)
-        Right (found, found_string, found_pos) -> Right (found ++ [element], found_string, found_pos)
+        Right (found, found_string, found_pos) -> Right (element : found, found_string, found_pos)
     Left _ -> Right ([], string, pos)
 
 parseSome :: Parser a -> Parser [a]
