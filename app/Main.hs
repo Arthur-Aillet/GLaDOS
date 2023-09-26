@@ -65,8 +65,8 @@ instance Monad Parser where
     return = pure
 
 
-withErrorMessage :: Parser a -> String -> Parser a
-withErrorMessage parser message = Parser (\string pos -> case runParser parser string pos of 
+withErr :: String -> Parser a -> Parser a
+withErr message parser = Parser (\string pos -> case runParser parser string pos of 
     Right a -> Right a
     Left (_, new_pos) -> Left (message, new_pos)
     )
@@ -129,12 +129,18 @@ parseWithSpace :: Parser a -> Parser a
 parseWithSpace parser = seq <$> parseMany (parseChar ' ')
     <*> (const <$> parser <*> parseMany (parseChar ' '))
 
+parseOpeningParenthesis :: Parser Char
+parseOpeningParenthesis = withErr "Missing opening parenthesis" (parseChar '(')
+
+parseClosingParenthesis :: Parser Char
+parseClosingParenthesis = withErr "Missing closing parenthesis" (parseChar ')')
+
 parsePair :: Parser a -> Parser (a, a)
 parsePair parser = parseWithSpace ((,) <$>
-    (seq <$> parseChar '(' <*> parseWithSpace parser)
-    <*> (const <$> parseWithSpace parser <*> parseChar ')'))
+    (seq <$> parseOpeningParenthesis <*> parseWithSpace parser)
+    <*> (const <$> parseWithSpace parser <*> parseClosingParenthesis))
 
 parseList :: Parser a -> Parser [a]
 parseList parser = parseWithSpace (const <$>
-    (seq <$> parseChar '(' <*> parseMany (parseWithSpace parser))
-    <*> parseChar ')')
+    (seq <$> parseOpeningParenthesis <*> parseMany (parseWithSpace parser))
+    <*> parseClosingParenthesis)
