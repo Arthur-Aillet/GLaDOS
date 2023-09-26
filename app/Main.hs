@@ -5,8 +5,6 @@
 -- GLaDOS scraper Main file
 --
 
-import Text.Read ( readMaybe )
-
 data Position = Position { line :: Int, char :: Int } deriving (Show)
 
 defaultPosition :: Position
@@ -21,6 +19,12 @@ type ParserOutput a = Either (String, Position) (a, String, Position)
 newtype Parser a = Parser {
     runParser :: String -> Position -> Either (String, Position) (a, String, Position)
 }
+
+instance Functor Parser where
+    fmap fct parser = Parser (\string pos -> case runParser parser string pos of
+        Right (a, new_string, new_pos) -> Right (fct a, new_string, new_pos)
+        Left a -> Left a
+        )
 
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
@@ -81,12 +85,7 @@ parseDigit :: Parser Char
 parseDigit = parseAnyChar ['0'..'9']
 
 parseUInt :: Parser Int
-parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string pos of
-    Right (found, found_string, found_pos) -> case readMaybe found of
-        Nothing -> Left ( "Whole number couldn't be formed", pos )
-        Just found_int -> Right ( found_int, found_string, found_pos )
-    Left (_, new_pos) -> Left ( "Invalid digit found", new_pos )
-    )
+parseUInt = fmap read (parseSome parseDigit)
 
 parseNegInt :: Parser Int
 parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt
