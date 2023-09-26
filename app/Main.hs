@@ -4,6 +4,7 @@
 -- File description:
 -- GLaDOS scraper Main file
 --
+
 import Control.Applicative
 
 data Position = Position { line :: Int, char :: Int } deriving (Show)
@@ -62,6 +63,13 @@ instance Monad Parser where
         Left err -> Left err
         )
     return = pure
+
+
+withErrorMessage :: Parser a -> String -> Parser a
+withErrorMessage parser message = Parser (\string pos -> case runParser parser string pos of 
+    Right a -> Right a
+    Left (_, new_pos) -> Left (message, new_pos)
+    )
 
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
