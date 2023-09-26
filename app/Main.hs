@@ -91,14 +91,7 @@ parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string 
     )
 
 parseNegInt :: Parser Int
-parseNegInt = Parser (\string pos -> case string of
-    ('-':xs) -> case runParser (parseSome parseDigit) xs (moveCursor pos False) of
-        Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
-            Nothing -> Left ( "Invalid digit found", pos )
-            Just found_int -> Right ( found_int, snd_string, snd_pos )
-        Left a -> Left a
-    _ -> Left ( "No neg sign found", pos )
-    )
+parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt 
 
 parseInt :: Parser Int
 parseInt = parseOr parseNegInt parseUInt
