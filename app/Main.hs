@@ -1,10 +1,10 @@
-import Control.Applicative
 --
 -- EPITECH PROJECT, 2023
 -- Main.hs
 -- File description:
 -- GLaDOS scraper Main file
 --
+import Control.Applicative
 
 data Position = Position { line :: Int, char :: Int } deriving (Show)
 
@@ -36,16 +36,32 @@ instance Applicative Parser where
             Left a -> Left a
         Left a -> Left a
         )
+    (*>)  :: Parser a -> Parser b -> Parser b
+    a *> b = Parser (\string pos -> case runParser a string pos of
+        Right (_, new_string, new_pos) -> runParser b new_string new_pos
+        Left _ -> runParser b string pos
+        )
 
 instance Alternative Parser where
-  empty = Parser (\_ pos ->Left ("Empty", pos))
-  (<|>) :: Parser a -> Parser a -> Parser a
-  (<|>) first second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
-    (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
-    (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
-    (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
-    (Left a, Left _) -> Left a
-    )
+    empty = Parser (\_ pos ->Left ("Empty", pos))
+    (<|>) :: Parser a -> Parser a -> Parser a
+    first <|> second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
+        (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
+        (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
+        (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
+        (Left a, Left _) -> Left a
+        )
+
+instance Monad Parser where
+    (>>) = (*>)
+    (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+    a >>= fct =  Parser (\string pos -> case runParser a string pos of
+        Right (res, new_string, new_pos) -> case runParser (fct res) new_string new_pos of 
+            Right (new, snd_string, snd_pos) -> Right (new, snd_string, snd_pos)
+            Left err -> Left err
+        Left err -> Left err
+        )
+    return = pure
 
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
