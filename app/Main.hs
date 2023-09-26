@@ -1,3 +1,4 @@
+import Control.Applicative
 --
 -- EPITECH PROJECT, 2023
 -- Main.hs
@@ -36,6 +37,16 @@ instance Applicative Parser where
         Left a -> Left a
         )
 
+instance Alternative Parser where
+  empty = Parser (\_ pos ->Left ("Empty", pos))
+  (<|>) :: Parser a -> Parser a -> Parser a
+  (<|>) first second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
+    (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
+    (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
+    (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
+    (Left a, Left _) -> Left a
+    )
+
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
     ('\n':xs)
@@ -59,12 +70,7 @@ parseAnyChar char = Parser (\string pos -> case string of
     )
 
 parseOr :: Parser a -> Parser a -> Parser a
-parseOr first second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
-    (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
-    (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
-    (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
-    (Left a, Left _) -> Left a
-    )
+parseOr first second = first <|> second
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith fnct first second = fnct <$> first <*> second
@@ -93,7 +99,7 @@ parseNegInt :: Parser Int
 parseNegInt = (\_ x -> x * (-1)) <$> parseChar '-' <*> parseUInt
 
 parseInt :: Parser Int
-parseInt = parseOr parseNegInt parseUInt
+parseInt = parseNegInt <|> parseUInt
 
 parseWithSpace :: Parser a -> Parser a
 parseWithSpace parser = seq <$> parseMany (parseChar ' ')
