@@ -26,7 +26,7 @@ newtype Parser a = Parser {
 }
 
 parseChar :: Char -> Parser Char
-parseChar char = Parser (\string pos -> case string of 
+parseChar char = Parser (\string pos -> case string of
     ('\n':xs)
         | '\n' == char -> Right ('\n', xs, moveCursor pos True)
         | otherwise -> Left ("Invalid char found", defaultPosition)
@@ -34,10 +34,10 @@ parseChar char = Parser (\string pos -> case string of
         | x == char -> Right (x, xs, moveCursor pos False)
         | otherwise -> Left ("Invalid char found", defaultPosition)
     _ -> Left ("Invalid char found", defaultPosition)
-    )       
+    )
 
 parseAnyChar :: [Char] -> Parser Char
-parseAnyChar char = Parser (\string pos -> case string of 
+parseAnyChar char = Parser (\string pos -> case string of
     ('\n':xs)
         | '\n' `elem` char -> Right ('\n', xs, moveCursor pos True)
         | otherwise -> Left ("Invalid char found", defaultPosition)
@@ -45,7 +45,7 @@ parseAnyChar char = Parser (\string pos -> case string of
         | x `elem` char -> Right (x, xs, moveCursor pos False)
         | otherwise -> Left ("Invalid char found", defaultPosition)
     _ -> Left ("Invalid char found", defaultPosition)
-    )       
+    )
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr first second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
@@ -55,28 +55,21 @@ parseOr first second = Parser (\string pos -> case (runParser first string pos, 
     (Left a, Left _) -> Left a
     )
 
-{-
-allValidOrFirstError :: [ParserOutput a] -> Position -> ParserOutput a
-allValidOrFirstError [] current = Left ("Empty list", current)
-allValidOrFirstError list _
-    | all isRight list = head list
-    | otherwise = Left (head (lefts list))
-
-parseMultipleExclusif :: [Parser a] -> Parser a
-parseMultipleExclusif list string current = allValidOrFirstError (map (\x -> x string current) list) current
-
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd first second string pos = case first string pos of
-    Left a -> Left a
-    Right (element, new_string, new_pos) -> case second new_string new_pos of
+parseAnd first second = Parser (\string pos -> case runParser first string pos of
+    Right (element, snd_string, snd_pos) -> case runParser second snd_string snd_pos of
+        Right (snd_element, thr_string, thr_pos) -> Right ((element, snd_element), thr_string, thr_pos)
         Left a -> Left a
-        Right (snd_elem, final_string, final_pos) -> Right ((element, snd_elem), final_string, final_pos)
+    Left a -> Left a
+    )
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith fnct first second string pos = case parseAnd first second string pos of
-    Left a -> Left a
+parseAndWith fnct first second = Parser (\string pos -> case runParser (parseAnd first second) string pos of
     Right ((a, b), new_string, new_pos) -> Right (fnct a b, new_string, new_pos)
+    Left a -> Left a
+    )
 
+{-
 parseMany :: Parser a -> Parser [a]
 parseMany parse string pos = case parse string pos of
     Right (element, new_string, new_pos) -> case parseMany parse new_string new_pos of
