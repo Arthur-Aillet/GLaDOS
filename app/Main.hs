@@ -26,6 +26,16 @@ instance Functor Parser where
         Left a -> Left a
         )
 
+instance Applicative Parser where
+    pure a = Parser (\string pos -> Right (a, string, pos))
+    (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+    (<*>) parserfct parsera = Parser (\string pos -> case runParser parserfct string pos of
+        Right (fct, new_string, new_pos) -> case runParser parsera new_string new_pos of
+            Right (a, snd_string, snd_pos) -> Right (fct a, snd_string, snd_pos)
+            Left a -> Left a
+        Left a -> Left a
+        )
+
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
     ('\n':xs)
@@ -85,7 +95,7 @@ parseDigit :: Parser Char
 parseDigit = parseAnyChar ['0'..'9']
 
 parseUInt :: Parser Int
-parseUInt = fmap read (parseSome parseDigit)
+parseUInt = read <$> parseSome parseDigit
 
 parseNegInt :: Parser Int
 parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt
@@ -101,17 +111,17 @@ parseWithSpace parser = parseAndWith seq
         (parseMany (parseChar ' ')))
 
 parsePair :: Parser a -> Parser (a, a)
-parsePair parser = parseWithSpace (parseAndWith (,) 
-    (parseAndWith seq 
-        (parseChar '(') 
+parsePair parser = parseWithSpace (parseAndWith (,)
+    (parseAndWith seq
+        (parseChar '(')
         (parseWithSpace parser))
-    (parseAndWith const 
-        (parseWithSpace parser) 
+    (parseAndWith const
+        (parseWithSpace parser)
         (parseChar ')')))
 
 parseList :: Parser a -> Parser [a]
 parseList parser = parseWithSpace (parseAndWith const
-    (parseAndWith seq 
-        (parseChar '(') 
+    (parseAndWith seq
+        (parseChar '(')
         (parseMany (parseWithSpace parser)))
     (parseChar ')'))
