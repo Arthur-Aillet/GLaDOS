@@ -90,19 +90,18 @@ parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string 
     Left a -> Left a
     )
 
-parseInt :: Parser Int
-parseInt = Parser (\string pos -> case string of
+parseNegInt :: Parser Int
+parseNegInt = Parser (\string pos -> case string of
     ('-':xs) -> case runParser (parseSome parseDigit) xs (moveCursor pos False) of
         Right (found, snd_string, snd_pos) -> case readMaybe ('-' : found) of
             Nothing -> Left ( "Invalid digit found", pos )
             Just found_int -> Right ( found_int, snd_string, snd_pos )
         Left a -> Left a
-    new_string -> case runParser (parseSome parseDigit) new_string pos of
-        Right (found, found_string, found_pos) -> case readMaybe found of
-            Nothing -> Left ( "Invalid digit found", pos )
-            Just found_int -> Right ( found_int, found_string, found_pos )
-        Left a -> Left a
+    _ -> Left ( "No neg sign found", pos )
     )
+
+parseInt :: Parser Int
+parseInt = parseOr parseNegInt parseUInt
 
 parseWithSpace :: Parser a -> Parser a
 parseWithSpace parser = Parser (\string pos -> case runParser (parseMany (parseChar ' ')) string pos of
