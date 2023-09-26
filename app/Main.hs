@@ -66,19 +66,11 @@ parseOr first second = Parser (\string pos -> case (runParser first string pos, 
     (Left a, Left _) -> Left a
     )
 
-parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd first second = Parser (\string pos -> case runParser first string pos of
-    Right (element, snd_string, snd_pos) -> case runParser second snd_string snd_pos of
-        Right (snd_element, thr_string, thr_pos) -> Right ((element, snd_element), thr_string, thr_pos)
-        Left a -> Left a
-    Left a -> Left a
-    )
-
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith fnct first second = Parser (\string pos -> case runParser (parseAnd first second) string pos of
-    Right ((a, b), new_string, new_pos) -> Right (fnct a b, new_string, new_pos)
-    Left a -> Left a
-    )
+parseAndWith fnct first second = fnct <$> first <*> second
+
+parseAnd :: Parser a -> Parser b -> Parser (a, b)
+parseAnd = parseAndWith (,)
 
 parseMany :: Parser a -> Parser [a]
 parseMany parse = Parser (\string pos -> case runParser parse string pos of
@@ -89,7 +81,7 @@ parseMany parse = Parser (\string pos -> case runParser parse string pos of
     )
 
 parseSome :: Parser a -> Parser [a]
-parseSome parse = parseAndWith (:) parse (parseMany parse)
+parseSome parse = (:) <$> parse <*> parseMany parse
 
 parseDigit :: Parser Char
 parseDigit = parseAnyChar ['0'..'9']
@@ -98,30 +90,21 @@ parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
 
 parseNegInt :: Parser Int
-parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt
+parseNegInt = (\_ x -> x * (-1)) <$> parseChar '-' <*> parseUInt
 
 parseInt :: Parser Int
 parseInt = parseOr parseNegInt parseUInt
 
 parseWithSpace :: Parser a -> Parser a
-parseWithSpace parser = parseAndWith seq
-    (parseMany (parseChar ' '))
-    (parseAndWith const
-        parser
-        (parseMany (parseChar ' ')))
+parseWithSpace parser = seq <$> parseMany (parseChar ' ')
+    <*> (const <$> parser <*> parseMany (parseChar ' '))
 
 parsePair :: Parser a -> Parser (a, a)
-parsePair parser = parseWithSpace (parseAndWith (,)
-    (parseAndWith seq
-        (parseChar '(')
-        (parseWithSpace parser))
-    (parseAndWith const
-        (parseWithSpace parser)
-        (parseChar ')')))
+parsePair parser = parseWithSpace ((,) <$>
+    (seq <$> parseChar '(' <*> parseWithSpace parser)
+    <*> (const <$> parseWithSpace parser <*> parseChar ')'))
 
 parseList :: Parser a -> Parser [a]
-parseList parser = parseWithSpace (parseAndWith const
-    (parseAndWith seq
-        (parseChar '(')
-        (parseMany (parseWithSpace parser)))
-    (parseChar ')'))
+parseList parser = parseWithSpace (const <$>
+    (seq <$> parseChar '(' <*> parseMany (parseWithSpace parser))
+    <*> parseChar ')')
