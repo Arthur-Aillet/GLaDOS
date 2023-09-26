@@ -85,9 +85,9 @@ parseDigit = parseAnyChar ['0'..'9']
 parseUInt :: Parser Int
 parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string pos of
     Right (found, found_string, found_pos) -> case readMaybe found of
-        Nothing -> Left ( "Invalid digit found", pos )
+        Nothing -> Left ( "Whole number couldn't be formed", pos )
         Just found_int -> Right ( found_int, found_string, found_pos )
-    Left a -> Left a
+    Left (_, new_pos) -> Left ( "Invalid digit found", new_pos )
     )
 
 parseNegInt :: Parser Int
@@ -104,28 +104,17 @@ parseWithSpace parser = parseAndWith seq
         (parseMany (parseChar ' ')))
 
 parsePair :: Parser a -> Parser (a, a)
-parsePair parser = parseAndWith (,) 
+parsePair parser = parseWithSpace (parseAndWith (,) 
     (parseAndWith seq 
         (parseChar '(') 
         (parseWithSpace parser))
     (parseAndWith const 
         (parseWithSpace parser) 
-        (parseChar ')'))
+        (parseChar ')')))
 
-{-
-parseOrDiff :: Parser a -> Parser b -> Parser (Either a b)
-parseOrDiff first second string pos = case (first string pos, second string pos) of
-    (Right (element, snd_string, snd_pos), Right _) -> Right (Left element, snd_string, snd_pos)
-    (Right (element, snd_string, snd_pos), Left _) -> Right (Left element, snd_string, snd_pos)
-    (Left _, Right (element, snd_string, snd_pos)) -> Right (Right element, snd_string, snd_pos)
-    (Left a, Left _) -> Left a
-
-parseList :: Parser a -> Parser [ a ]
-parseList parser ('(':xs) pos = case parseSome (parseWithSpace parser) xs (moveCursor pos False) of
-    Right (found, for_string, for_pos) -> case parseChar ')' for_string for_pos of
-        Right (_, fif_string, fif_pos) -> Right (found, fif_string, fif_pos)
-        Left (_, err_pos) -> Left ("Missing closing parenthesis", err_pos)
-    Left a -> Left a
-parseList _ _ pos = Left ("Missing opening parenthesis", pos)
-
--}
+parseList :: Parser a -> Parser [a]
+parseList parser = parseWithSpace (parseAndWith const
+    (parseAndWith seq 
+        (parseChar '(') 
+        (parseMany (parseWithSpace parser)))
+    (parseChar ')'))
