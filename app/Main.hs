@@ -28,10 +28,10 @@ parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of
     ('\n':xs)
         | '\n' == char -> Right ('\n', xs, moveCursor pos True)
-        | otherwise -> Left ("Invalid char found", defaultPosition)
+        | otherwise -> Left ("Invalid char found", moveCursor pos True)
     (x:xs)
         | x == char -> Right (x, xs, moveCursor pos False)
-        | otherwise -> Left ("Invalid char found", defaultPosition)
+        | otherwise -> Left ("Invalid char found", moveCursor pos False)
     _ -> Left ("Invalid char found", defaultPosition)
     )
 
@@ -39,10 +39,10 @@ parseAnyChar :: [Char] -> Parser Char
 parseAnyChar char = Parser (\string pos -> case string of
     ('\n':xs)
         | '\n' `elem` char -> Right ('\n', xs, moveCursor pos True)
-        | otherwise -> Left ("Invalid char found", defaultPosition)
+        | otherwise -> Left ("Invalid char found", moveCursor pos True)
     (x:xs)
         | x `elem` char -> Right (x, xs, moveCursor pos False)
-        | otherwise -> Left ("Invalid char found", defaultPosition)
+        | otherwise -> Left ("Invalid char found", moveCursor pos False)
     _ -> Left ("Invalid char found", defaultPosition)
     )
 
@@ -91,29 +91,26 @@ parseUInt = Parser (\string pos -> case runParser (parseSome parseDigit) string 
     )
 
 parseNegInt :: Parser Int
-parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt 
+parseNegInt = parseAndWith (\_ b -> b * (-1)) (parseChar '-') parseUInt
 
 parseInt :: Parser Int
 parseInt = parseOr parseNegInt parseUInt
 
 parseWithSpace :: Parser a -> Parser a
-parseWithSpace parser = parseAndWith const 
-    (parseAndWith const 
-        parser 
-        (parseMany (parseChar ' '))) 
+parseWithSpace parser = parseAndWith seq
     (parseMany (parseChar ' '))
+    (parseAndWith const
+        parser
+        (parseMany (parseChar ' ')))
 
 parsePair :: Parser a -> Parser (a, a)
-parsePair parser = Parser (\string pos -> case string of
-    ('(':xs) -> case runParser (parseWithSpace parser) xs (moveCursor pos False) of
-        Right (found, snd_string, snd_pos) -> case runParser (parseWithSpace parser) snd_string snd_pos of
-            Right (snd_found, for_string, for_pos) -> case runParser (parseChar ')') for_string for_pos of
-                Right (_, fif_string, fif_pos) -> Right ((found, snd_found), fif_string, fif_pos)
-                Left (_, err_pos) -> Left ("Missing closing parenthesis", err_pos)
-            Left a -> Left a
-        Left a -> Left a
-    _ -> Left ("Missing opening parenthesis", pos)
-    )
+parsePair parser = parseAndWith (,) 
+    (parseAndWith seq 
+        (parseChar '(') 
+        (parseWithSpace parser))
+    (parseAndWith const 
+        (parseWithSpace parser) 
+        (parseChar ')'))
 
 {-
 parseOrDiff :: Parser a -> Parser b -> Parser (Either a b)
