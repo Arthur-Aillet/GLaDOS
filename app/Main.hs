@@ -104,14 +104,11 @@ parseInt :: Parser Int
 parseInt = parseOr parseNegInt parseUInt
 
 parseWithSpace :: Parser a -> Parser a
-parseWithSpace parser = Parser (\string pos -> case runParser (parseMany (parseChar ' ')) string pos of
-    Right (_, snd_string, snd_pos) -> case runParser parser snd_string snd_pos of
-        Right (found, thr_string, thr_pos) -> case runParser (parseMany (parseChar ' ')) thr_string thr_pos  of
-            Right (_, for_string, for_pos) -> Right (found, for_string, for_pos)
-            Left a -> Left a
-        Left a -> Left a
-    Left a -> Left a
-    )
+parseWithSpace parser = parseAndWith const 
+    (parseAndWith const 
+        parser 
+        (parseMany (parseChar ' '))) 
+    (parseMany (parseChar ' '))
 
 parsePair :: Parser a -> Parser (a, a)
 parsePair parser = Parser (\string pos -> case string of
