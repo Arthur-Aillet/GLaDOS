@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-overlapping-patterns #-}
 import Data.Foldable (find)
 import Data.Either (rights, lefts, isRight)
 import Text.Read
@@ -21,25 +20,34 @@ moveCursor current True = Position { line = line current + 1, char = char curren
 moveCursor current False =  Position { line = line current, char = char current + 1 }
 
 type ParserOutput a = Either (String, Position) (a, String, Position)
-type Parser a = String -> Position -> ParserOutput a
+
+newtype Parser a = Parser {
+    runParser :: String -> Position -> Either (String, Position) (a, String, Position)
+}
 
 parseChar :: Char -> Parser Char
-parseChar '\n' ('\n':xs) current = Right ('\n', xs, moveCursor current True)
-parseChar char (x:xs) current
-    | char == x = Right (x, xs, moveCursor current False)
-    | otherwise = Left ( "Invalid char found", current )
-parseChar _ _ current = Left ( "Invalid char found", current )
+parseChar char = Parser (\string pos -> case string of 
+    ('\n':xs)
+        | '\n' == char -> Right ('\n', xs, moveCursor pos False)
+        | otherwise -> Left ("Invalid char found", defaultPosition)
+    (x:xs)
+        | x == char -> Right (x, xs, moveCursor pos False)
+        | otherwise -> Left ("Invalid char found", defaultPosition)
+    _ -> Left ("Invalid char found", defaultPosition)
+    )       
 
-parseFoundChar :: Maybe Char -> Parser Char
-parseFoundChar Nothing _ current = Left ( "Char not found", current )
-parseFoundChar (Just '\n') string current = Right ('\n', string, moveCursor current True)
-parseFoundChar (Just a) string current =  Right (a, string, moveCursor current False)
+parseAnyChar :: [Char] -> Parser Char
+parseAnyChar char = Parser (\string pos -> case string of 
+    ('\n':xs)
+        | '\n' `elem` char -> Right ('\n', xs, moveCursor pos False)
+        | otherwise -> Left ("Invalid char found", defaultPosition)
+    (x:xs)
+        | x `elem` char -> Right (x, xs, moveCursor pos False)
+        | otherwise -> Left ("Invalid char found", defaultPosition)
+    _ -> Left ("Invalid char found", defaultPosition)
+    )       
 
-parseAnyChar :: String -> Parser Char
-parseAnyChar "" _ current = Left ( "Empty list of chars", current )
-parseAnyChar chars (x:xs) current = parseFoundChar (find (== x) chars) xs current
-parseAnyChar _ _ current = Left ( "List empty", current )
-
+{-
 validOrFirstError :: [ParserOutput a] -> Position -> ParserOutput a
 validOrFirstError [] current = Left ("Empty list", current)
 validOrFirstError list _
@@ -145,3 +153,5 @@ parseList parser ('(':xs) pos = case parseSome (parseWithSpace parser) xs (moveC
         Left (_, err_pos) -> Left ("Missing closing parenthesis", err_pos)
     Left a -> Left a
 parseList _ _ pos = Left ("Missing opening parenthesis", pos)
+
+-}
