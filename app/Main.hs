@@ -28,7 +28,7 @@ newtype Parser a = Parser {
 parseChar :: Char -> Parser Char
 parseChar char = Parser (\string pos -> case string of 
     ('\n':xs)
-        | '\n' == char -> Right ('\n', xs, moveCursor pos False)
+        | '\n' == char -> Right ('\n', xs, moveCursor pos True)
         | otherwise -> Left ("Invalid char found", defaultPosition)
     (x:xs)
         | x == char -> Right (x, xs, moveCursor pos False)
@@ -39,7 +39,7 @@ parseChar char = Parser (\string pos -> case string of
 parseAnyChar :: [Char] -> Parser Char
 parseAnyChar char = Parser (\string pos -> case string of 
     ('\n':xs)
-        | '\n' `elem` char -> Right ('\n', xs, moveCursor pos False)
+        | '\n' `elem` char -> Right ('\n', xs, moveCursor pos True)
         | otherwise -> Left ("Invalid char found", defaultPosition)
     (x:xs)
         | x `elem` char -> Right (x, xs, moveCursor pos False)
@@ -47,19 +47,15 @@ parseAnyChar char = Parser (\string pos -> case string of
     _ -> Left ("Invalid char found", defaultPosition)
     )       
 
-{-
-validOrFirstError :: [ParserOutput a] -> Position -> ParserOutput a
-validOrFirstError [] current = Left ("Empty list", current)
-validOrFirstError list _
-    | null (rights list) = Left (head (lefts list))
-    | otherwise = Right (head (rights list))
-
-parseMultipleInclusif :: [Parser a] -> Parser a
-parseMultipleInclusif list string current = validOrFirstError (map (\x -> x string current) list) current
-
 parseOr :: Parser a -> Parser a -> Parser a
-parseOr first second = parseMultipleInclusif [first, second]
+parseOr first second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
+    (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
+    (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
+    (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
+    (Left a, Left _) -> Left a
+    )
 
+{-
 allValidOrFirstError :: [ParserOutput a] -> Position -> ParserOutput a
 allValidOrFirstError [] current = Left ("Empty list", current)
 allValidOrFirstError list _
