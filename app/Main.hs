@@ -1,13 +1,11 @@
-import Data.Foldable (find)
-import Data.Either (rights, lefts, isRight)
-import Text.Read
-
 --
 -- EPITECH PROJECT, 2023
 -- Main.hs
 -- File description:
 -- GLaDOS scraper Main file
 --
+
+import Text.Read ( readMaybe )
 
 data Position = Position { line :: Int, char :: Int } deriving (Show)
 
