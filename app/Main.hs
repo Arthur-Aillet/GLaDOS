@@ -16,8 +16,6 @@ moveCursor :: Position -> Bool -> Position
 moveCursor current True = Position { line = line current + 1, char = char current }
 moveCursor current False =  Position { line = line current, char = char current + 1 }
 
-type ParserOutput a = Either (String, Position) (a, String, Position)
-
 newtype Parser a = Parser {
     runParser :: String -> Position -> Either (String, Position) (a, String, Position)
 }
@@ -29,7 +27,6 @@ instance Functor Parser where
 
 instance Applicative Parser where
     pure a = Parser $ \string pos -> Right (a, string, pos)
-    (<*>) :: Parser (a -> b) -> Parser a -> Parser b
     (<*>) parserfct parsera = Parser $ \string pos -> case runParser parserfct string pos of
         Right (fct, new_string, new_pos) -> case runParser parsera new_string new_pos of
             Right (a, snd_string, snd_pos) -> Right (fct a, snd_string, snd_pos)
@@ -42,7 +39,6 @@ instance Applicative Parser where
 
 instance Alternative Parser where
     empty = Parser $ \_ pos ->Left ("Empty", pos)
-    (<|>) :: Parser a -> Parser a -> Parser a
     first <|> second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
         (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
         (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
@@ -52,7 +48,6 @@ instance Alternative Parser where
 
 instance Monad Parser where
     (>>) = (*>)
-    (>>=) :: Parser a -> (a -> Parser b) -> Parser b
     a >>= fct =  Parser $ \string pos -> case runParser a string pos of
         Right (res, new_string, new_pos) -> case runParser (fct res) new_string new_pos of 
             Right (new, snd_string, snd_pos) -> Right (new, snd_string, snd_pos)
