@@ -1,6 +1,7 @@
 module Lib
-    ( foo
-    ) where
+  ( foo,
+  )
+where
 
-foo::Int ->Int
-foo = (+1)
+foo :: Int -> Int
+foo = (+ 1)
