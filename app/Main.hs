@@ -17,25 +17,24 @@ withErr msg parser = Parser $ \string pos -> case runParser parser string pos of
   Right a -> Right a
   Left (_, new_pos) -> Left (msg, new_pos)
 
+failingWith :: String -> Parser a
+failingWith string = Parser(\_ pos -> Left (string, pos))
+
 parseChar :: Char -> Parser Char
 parseChar '\n' = Parser $ \string pos -> case string of
   ('\n' : xs) -> Right ('\n', xs, moveCursor pos True)
+  [] -> Left ("Char not present in empty list", pos)
   _ -> Left ("Invalid char found", pos)
 parseChar char = Parser $ \string pos -> case string of
   (x : xs)
     | x == char -> Right (x, xs, moveCursor pos False)
     | otherwise -> Left ("Invalid char found", moveCursor pos False)
-  _ -> Left ("Invalid char found", pos)
+  [] -> Left ("Char not present in empty list", pos)
 
 parseAnyChar :: [Char] -> Parser Char
-parseAnyChar char = Parser $ \string pos -> case string of
-  ('\n' : xs)
-    | '\n' `elem` char -> Right ('\n', xs, moveCursor pos True)
-    | otherwise -> Left ("Invalid char found", moveCursor pos True)
-  (x : xs)
-    | x `elem` char -> Right (x, xs, moveCursor pos False)
-    | otherwise -> Left ("Invalid char found", moveCursor pos False)
-  _ -> Left ("Invalid char found", pos)
+parseAnyChar = foldl
+  (\a b -> a <|> parseChar b)
+  (failingWith "Char not found in list")
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr first second = first <|> second
@@ -85,7 +84,7 @@ parsePair :: Parser a -> Parser (a, a)
 parsePair parser =
   parseWithSpace
     ( (,)
-        <$> (seq <$> parseOpeningParenthesis <*> parseWithSpace parser)
+        <$> (parseOpeningParenthesis >> parseWithSpace parser)
         <*> (const <$> parseWithSpace parser <*> parseClosingParenthesis)
     )
 
@@ -93,9 +92,6 @@ parseList :: Parser a -> Parser [a]
 parseList parser =
   parseWithSpace
     ( const
-        <$> ( seq
-                <$> parseOpeningParenthesis
-                <*> parseMany (parseWithSpace parser)
-            )
+        <$> (parseOpeningParenthesis >> parseMany (parseWithSpace parser))
         <*> parseClosingParenthesis
     )

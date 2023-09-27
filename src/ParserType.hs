@@ -31,7 +31,7 @@ instance Applicative Parser where
     Left a -> Left a
   a *> b = Parser $ \string pos -> case runParser a string pos of
     Right (_, new_string, new_pos) -> runParser b new_string new_pos
-    Left _ -> runParser b string pos
+    Left c -> Left c
 
 instance Alternative Parser where
   empty = Parser $ \_ pos -> Left ("Empty", pos)
