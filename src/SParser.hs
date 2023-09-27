@@ -85,9 +85,13 @@ getParenthesis (x : xs) i   | x == "(" = (x : getParenthesis xs (i + 1))
 removeParenthesis :: [String] -> Int -> [String]
 removeParenthesis [] _ = []
 removeParenthesis (")" : xs) 1 = xs
-removeParenthesis (x : xs) i   | x == "(" = (removeParenthesis xs (i + 1))
+removeParenthesis (x : xs) i| x == "(" = (removeParenthesis xs (i + 1))
                             | x == ")" = (removeParenthesis xs (i - 1))
                             | otherwise = (removeParenthesis xs i)
 
 getInsideParentheses :: [String] -> [String]
-getInsideParentheses str = init $ tail (getParenthesis str 0)
+getInsideParentheses [] = []
+getInsideParentheses str = let x = (getParenthesis str 0)
+                           in if head x == "("
+                                then init $ tail x
+                                else x
