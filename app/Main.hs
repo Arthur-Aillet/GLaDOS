@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Main.hs
 -- File description:
 -- GLaDOS scraper Main file
---
+-}
 
 import Control.Applicative
 
