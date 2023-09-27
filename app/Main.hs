@@ -7,21 +7,21 @@
 
 import Control.Applicative (Alternative ((<|>)))
 import ParserType (Parser (..))
-import PositionType (Position, moveCursor)
+import PositionType (moveCursor)
 
 main :: IO ()
 main = putStrLn "Hello, World!"
 
 withErr :: String -> Parser a -> Parser a
-withErr message parser = Parser $ \string pos -> case runParser parser string pos of
+withErr msg parser = Parser $ \string pos -> case runParser parser string pos of
   Right a -> Right a
-  Left (_, new_pos) -> Left (message, new_pos)
+  Left (_, new_pos) -> Left (msg, new_pos)
 
 parseChar :: Char -> Parser Char
+parseChar '\n' = Parser $ \string pos -> case string of
+  ('\n' : xs) -> Right ('\n', xs, moveCursor pos True)
+  _ -> Left ("Invalid char found", pos)
 parseChar char = Parser $ \string pos -> case string of
-  ('\n' : xs)
-    | '\n' == char -> Right ('\n', xs, moveCursor pos True)
-    | otherwise -> Left ("Invalid char found", moveCursor pos True)
   (x : xs)
     | x == char -> Right (x, xs, moveCursor pos False)
     | otherwise -> Left ("Invalid char found", moveCursor pos False)
@@ -48,9 +48,10 @@ parseAnd = parseAndWith (,)
 
 parseMany :: Parser a -> Parser [a]
 parseMany parse = Parser $ \string pos -> case runParser parse string pos of
-  Right (element, new_string, new_pos) -> case runParser (parseMany parse) new_string new_pos of
-    Left _ -> Right ([], new_string, new_pos)
-    Right (found, found_string, found_pos) -> Right (element : found, found_string, found_pos)
+  Right (element, new_str, new_pos) ->
+    case runParser (parseMany parse) new_str new_pos of
+      Left _ -> Right ([], new_str, new_pos)
+      Right (found, fd_str, fd_pos) -> Right (element : found, fd_str, fd_pos)
   Left _ -> Right ([], string, pos)
 
 parseSome :: Parser a -> Parser [a]
@@ -92,6 +93,9 @@ parseList :: Parser a -> Parser [a]
 parseList parser =
   parseWithSpace
     ( const
-        <$> (seq <$> parseOpeningParenthesis <*> parseMany (parseWithSpace parser))
+        <$> ( seq
+                <$> parseOpeningParenthesis
+                <*> parseMany (parseWithSpace parser)
+            )
         <*> parseClosingParenthesis
     )
