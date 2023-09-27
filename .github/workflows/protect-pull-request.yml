@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
 jobs:
-  Explore-GitHub-Actions:
+  Run-Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Haskell

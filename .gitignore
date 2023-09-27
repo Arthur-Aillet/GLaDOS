@@ -27,3 +27,4 @@ ignore/
 *.cabal
 test/coverage/*
 !test/coverage/.gitkeep
+*.cabal
