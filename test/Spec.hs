@@ -1,10 +1,12 @@
-import Test.HUnit
 import ParserSpec (parserTests)
+import Test.HUnit
+import Control.Monad
 
 main :: IO ()
-main = runTestTT tests >> pure ()
+main = Control.Monad.void (runTestTT tests)
 
 tests :: Test
-tests = TestList [
-    parserTests
+tests =
+  TestList
+    [ parserTests
     ]
