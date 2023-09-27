@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- glados
 -- File description:
 -- Converter
---
+-}
 
 module Converter (sexprToAST) where
 

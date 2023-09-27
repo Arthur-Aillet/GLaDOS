@@ -1,3 +1,10 @@
+{-
+-- EPITECH PROJECT, 2023
+-- glados
+-- File description:
+-- AST
+-}
+
 module AST
   ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
     evalAST,
@@ -32,7 +39,6 @@ execCallDistribute ctx [] [] = Just ctx
 execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
   Just next -> case evalAST ctx x of
     (_, y) -> Just $ insert s y next
-    _ -> Nothing
   Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
@@ -40,7 +46,7 @@ execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
 execCall ctx call args =
   ( ctx,
     case evalAST ctx call of
-      (ctx2, Lambda bindings expr) -> case execCallDistribute ctx2 bindings args of
+      (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
         Just jLocalCtx -> snd (evalAST jLocalCtx expr)
         Nothing -> Error "incorrect args to lambda"
       (_, Symbol sym) ->
