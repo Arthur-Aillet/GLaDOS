@@ -2,59 +2,15 @@
 -- EPITECH PROJECT, 2023
 -- Main.hs
 -- File description:
--- GLaDOS scraper Main file
+-- GLaDOS Main file
 -}
 
-import Control.Applicative
+import PositionType (Position, moveCursor)
+import ParserType (Parser(..))
+import Control.Applicative (Alternative((<|>)))
 
-data Position = Position { line :: Int, char :: Int } deriving (Show)
-
-defaultPosition :: Position
-defaultPosition = Position { line = 0, char = 0 }
-
-moveCursor :: Position -> Bool -> Position
-moveCursor current True = Position { line = line current + 1, char = char current }
-moveCursor current False =  Position { line = line current, char = char current + 1 }
-
-newtype Parser a = Parser {
-    runParser :: String -> Position -> Either (String, Position) (a, String, Position)
-}
-
-instance Functor Parser where
-    fmap fct parser = Parser $ \string pos -> case runParser parser string pos of
-        Right (a, new_string, new_pos) -> Right (fct a, new_string, new_pos)
-        Left a -> Left a
-
-instance Applicative Parser where
-    pure a = Parser $ \string pos -> Right (a, string, pos)
-    (<*>) parserfct parsera = Parser $ \string pos -> case runParser parserfct string pos of
-        Right (fct, new_string, new_pos) -> case runParser parsera new_string new_pos of
-            Right (a, snd_string, snd_pos) -> Right (fct a, snd_string, snd_pos)
-            Left a -> Left a
-        Left a -> Left a
-    (*>)  :: Parser a -> Parser b -> Parser b
-    a *> b = Parser $ \string pos -> case runParser a string pos of
-        Right (_, new_string, new_pos) -> runParser b new_string new_pos
-        Left _ -> runParser b string pos
-
-instance Alternative Parser where
-    empty = Parser $ \_ pos ->Left ("Empty", pos)
-    first <|> second = Parser (\string pos -> case (runParser first string pos, runParser second string pos) of
-        (Right (element, snd_string, snd_pos), Right _) -> Right (element, snd_string, snd_pos)
-        (Right (element, snd_string, snd_pos), Left _) -> Right (element, snd_string, snd_pos)
-        (Left _, Right (element, snd_string, snd_pos)) -> Right (element, snd_string, snd_pos)
-        (Left a, Left _) -> Left a
-        )
-
-instance Monad Parser where
-    (>>) = (*>)
-    a >>= fct =  Parser $ \string pos -> case runParser a string pos of
-        Right (res, new_string, new_pos) -> case runParser (fct res) new_string new_pos of 
-            Right (new, snd_string, snd_pos) -> Right (new, snd_string, snd_pos)
-            Left err -> Left err
-        Left err -> Left err
-    return = pure
-
+main :: IO ()
+main = putStrLn "Hello, World!"
 
 withErr :: String -> Parser a -> Parser a
 withErr message parser = Parser $ \string pos -> case runParser parser string pos of 
@@ -69,7 +25,7 @@ parseChar char = Parser $ \string pos -> case string of
     (x:xs)
         | x == char -> Right (x, xs, moveCursor pos False)
         | otherwise -> Left ("Invalid char found", moveCursor pos False)
-    _ -> Left ("Invalid char found", defaultPosition)
+    _ -> Left ("Invalid char found", pos)
 
 parseAnyChar :: [Char] -> Parser Char
 parseAnyChar char = Parser $ \string pos -> case string of
@@ -79,7 +35,7 @@ parseAnyChar char = Parser $ \string pos -> case string of
     (x:xs)
         | x `elem` char -> Right (x, xs, moveCursor pos False)
         | otherwise -> Left ("Invalid char found", moveCursor pos False)
-    _ -> Left ("Invalid char found", defaultPosition)
+    _ -> Left ("Invalid char found", pos)
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr first second = first <|> second
