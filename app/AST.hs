@@ -29,20 +29,24 @@ emptyContext = empty
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
 execCallDistribute ctx (s:ss) (x:xs) = case execCallDistribute ctx ss xs of
-    Just next -> Just $ insert s x next
+    Just next -> case evalAST ctx x of
+        (_, y) -> Just $ insert s y next
+        _ -> Nothing
     Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
 
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
-execCall ctx call args = (ctx, case evalAST ctx call of
+execCall ctx call args =
+    (ctx, case evalAST ctx call of
         (ctx2, Lambda bindings expr) -> case execCallDistribute ctx2 bindings args of
             Just jLocalCtx -> snd (evalAST jLocalCtx expr)
-            Nothing ->  Error "incorrect number or args to lambda"
+            Nothing ->  Error "incorrect args to lambda"
         (_, Symbol sym) -> if isBuiltin sym then
             execBuiltins ctx sym args
             else
-                 Error "call to non-procedure"
+                 Error ("call to non-procedure symbol: " ++ sym)
+        (_, Error x) -> Error x
         _ -> Error "call to non-procedure"
     )
 
@@ -70,7 +74,7 @@ evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
 evalAST ctx (Null) = (ctx, Error "expression has no value")
 evalAST ctx (Symbol sym) = case ctx !? sym of
-    Just jast -> evalAST ctx jast
+    Just jast -> (ctx, jast)
     Nothing -> if isBuiltin sym then
             (ctx, Symbol sym)
         else
@@ -83,6 +87,7 @@ evalAST ctx (Truth t) = (ctx, Truth t)
 evalAST ctx (Call expr args) = execCall ctx expr args
 evalAST ctx (Builtin name args) = (ctx, execBuiltins ctx name args)
 evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
+    Error err -> (ctx, Error err)
     Truth False -> evalAST ctx _else
     _ -> evalAST ctx _then
 evalAST ctx x = (ctx, x)
@@ -95,11 +100,12 @@ expectAtom (_, Error string) = Error string
 expectAtom (_, x) = Error ("expected Atom but got: " ++ show x)
 
 binOp :: (Int -> Int -> Int) -> Context -> [Ast] -> Ast
-binOp op ctx [a, b] = case expectAtom (evalAST ctx a) of
-    Atom ia -> case expectAtom (evalAST ctx b) of
-        Atom ib -> Atom (op ia ib)
+binOp op ctx [a, b] =
+        case expectAtom (evalAST ctx a) of
+        Atom ia -> case expectAtom (evalAST ctx b) of
+            Atom ib -> Atom (op ia ib)
+            x -> x
         x -> x
-    x -> x
 binOp _ _ _ = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
