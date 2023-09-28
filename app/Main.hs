@@ -70,9 +70,7 @@ parseInt = parseNegInt <|> parseUInt
 
 parseWithSpace :: Parser a -> Parser a
 parseWithSpace parser =
-  seq
-    <$> parseMany (parseChar ' ')
-    <*> (const <$> parser <*> parseMany (parseChar ' '))
+  parseMany (parseChar ' ') *> parser <* parseMany (parseChar ' ')
 
 parseOpeningParenthesis :: Parser Char
 parseOpeningParenthesis = withErr "Missing opening parenthesis" (parseChar '(')
@@ -84,13 +82,13 @@ parsePair :: Parser a -> Parser (a, a)
 parsePair parser =
   parseWithSpace
     ( (,)
-        <$> (parseOpeningParenthesis >> parseWithSpace parser)
+        <$> (parseOpeningParenthesis *> parseWithSpace parser)
         <*> (parseWithSpace parser <* parseClosingParenthesis)
     )
 
 parseList :: Parser a -> Parser [a]
 parseList parser =
   parseWithSpace
-    ( parseOpeningParenthesis >>
+    ( parseOpeningParenthesis *>
     parseMany (parseWithSpace parser) <*
     parseClosingParenthesis )
