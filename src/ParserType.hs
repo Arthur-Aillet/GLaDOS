@@ -5,7 +5,7 @@
 -- Parser type
 -}
 
-module ParserType where
+module ParserType (Parser (..)) where
 
 import Control.Applicative (Alternative (empty, (<|>)))
 import PositionType (Position)
@@ -29,9 +29,8 @@ instance Applicative Parser where
       Right (a, snd_s, snd_pos) -> Right (fct a, snd_s, snd_pos)
       Left a -> Left a
     Left a -> Left a
-  a *> b = Parser $ \string pos -> case runParser a string pos of
-    Right (_, new_string, new_pos) -> runParser b new_string new_pos
-    Left c -> Left c
+  a *> b = seq <$> a <*> b
+  a <* b = const <$> a <*> b
 
 instance Alternative Parser where
   empty = Parser $ \_ pos -> Left ("Empty", pos)

@@ -13,5 +13,5 @@ defaultPosition :: Position
 defaultPosition = Position {line = 0, char = 0}
 
 moveCursor :: Position -> Bool -> Position
-moveCursor current True = Position {line = line current + 1, char = char current}
-moveCursor current False = Position {line = line current, char = char current + 1}
+moveCursor pos True = Position {line = line pos + 1, char = char pos}
+moveCursor pos False = Position {line = line pos, char = char pos + 1}

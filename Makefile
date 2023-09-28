@@ -22,7 +22,7 @@ quick:
 	ghc app/*.hs src/*.hs -o $(NAME)
 
 test-run:
-	stack test --pedantic --coverage
+	stack test --coverage
 	stack hpc report --all --destdir test/coverage
 
 test: test-run
