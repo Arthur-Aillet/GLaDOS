@@ -5,7 +5,7 @@
 -- Parser type
 -}
 
-module ParserType where
+module ParserType (Parser (..)) where
 
 import Control.Applicative (Alternative (empty, (<|>)))
 import PositionType (Position)

@@ -6,10 +6,10 @@
 -}
 
 import Control.Applicative (Alternative ((<|>)))
-import ParserType (Parser (..))
-import PositionType (moveCursor)
 import Data.Bool (Bool)
 import Data.Either
+import ParserType (Parser (..))
+import PositionType (moveCursor)
 
 main :: IO ()
 main = putStrLn "Hello, World!"
@@ -25,7 +25,7 @@ failingWith string = Parser (\_ pos -> Left (string, pos))
 parseAChar :: Parser Char
 parseAChar = Parser $ \string pos -> case string of
   ('\n' : xs) -> Right ('\n', xs, moveCursor pos True)
-  (x : xs) ->  Right (x, xs, moveCursor pos False)
+  (x : xs) -> Right (x, xs, moveCursor pos False)
   [] -> Left ("Char not present in empty list", pos)
 
 parseChar :: Char -> Parser Char
@@ -43,9 +43,10 @@ parseNotChar x = Parser $ \string pos -> case runParser parseAChar string pos of
   Left (_, pos) -> Left ("Char not present in empty list", pos)
 
 parseAnyChar :: [Char] -> Parser Char
-parseAnyChar = foldl
-  (\a b -> a <|> parseChar b)
-  (failingWith "Char not found in list")
+parseAnyChar =
+  foldl
+    (\a b -> a <|> parseChar b)
+    (failingWith "Char not found in list")
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr first second = first <|> second
@@ -74,10 +75,10 @@ parseBool :: Parser Bool
 parseBool = (== 't') <$> (parseChar '#' *> parseAnyChar ['f', 't'])
 
 parseSymbol :: String -> Parser String
-parseSymbol string = Parser $ \str pos -> 
-  case runParser (parseSome (parseAnyChar (['a'..'z'] ++ ['A'..'Z']))) str pos of
+parseSymbol string = Parser $ \s p ->
+  case runParser (parseSome (parseAnyChar (['a' .. 'z'] ++ ['A' .. 'Z']))) s p of
     Right (found, s, p)
-      | found == string -> Right (found, s, p) 
+      | found == string -> Right (found, s, p)
       | otherwise -> Left ("Invalid string found", p)
     Left (_, new_pos) -> Left ("String not found", new_pos)
 
@@ -88,7 +89,10 @@ parseClosingQuote :: Parser Char
 parseClosingQuote = withErr "Missing closing Quote" (parseChar '"')
 
 parseString :: Parser String
-parseString = parseOpeningQuote *> parseMany (parseNotChar '"') <* parseClosingQuote
+parseString =
+  parseOpeningQuote
+    *> parseMany (parseNotChar '"')
+    <* parseClosingQuote
 
 parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
@@ -120,6 +124,7 @@ parsePair parser =
 parseList :: Parser a -> Parser [a]
 parseList parser =
   parseWithSpace
-    ( parseOpeningParenthesis *>
-    parseMany (parseWithSpace parser) <*
-    parseClosingParenthesis )
+    ( parseOpeningParenthesis
+        *> parseMany (parseWithSpace parser)
+        <* parseClosingParenthesis
+    )
