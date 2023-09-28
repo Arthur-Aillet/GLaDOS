@@ -85,13 +85,12 @@ parsePair parser =
   parseWithSpace
     ( (,)
         <$> (parseOpeningParenthesis >> parseWithSpace parser)
-        <*> (const <$> parseWithSpace parser <*> parseClosingParenthesis)
+        <*> (parseWithSpace parser <* parseClosingParenthesis)
     )
 
 parseList :: Parser a -> Parser [a]
 parseList parser =
   parseWithSpace
-    ( const
-        <$> (parseOpeningParenthesis >> parseMany (parseWithSpace parser))
-        <*> parseClosingParenthesis
-    )
+    ( parseOpeningParenthesis >>
+    parseMany (parseWithSpace parser) <*
+    parseClosingParenthesis )
