@@ -9,6 +9,7 @@ import Control.Applicative (Alternative ((<|>)))
 import ParserType (Parser (..))
 import PositionType (moveCursor)
 import Data.Bool (Bool)
+import Data.Either
 
 main :: IO ()
 main = putStrLn "Hello, World!"
@@ -19,7 +20,7 @@ withErr msg parser = Parser $ \string pos -> case runParser parser string pos of
   Left (_, new_pos) -> Left (msg, new_pos)
 
 failingWith :: String -> Parser a
-failingWith string = Parser(\_ pos -> Left (string, pos))
+failingWith string = Parser (\_ pos -> Left (string, pos))
 
 parseChar :: Char -> Parser Char
 parseChar '\n' = Parser $ \string pos -> case string of
@@ -62,6 +63,14 @@ parseDigit = parseAnyChar ['0' .. '9']
 
 parseBool :: Parser Bool
 parseBool = (== 't') <$> (parseChar '#' *> parseAnyChar ['f', 't'])
+
+parseSymbole :: String -> Parser String
+parseSymbole string = Parser $ \str pos -> 
+  case runParser (parseSome (parseAnyChar (['a'..'z'] ++ ['A'..'Z']))) str pos of
+    Right (found, s, p) -> if found == string 
+      then Right (found, s, p) 
+      else Left ("Invalid string found", p)
+    Left (_, new_pos) -> Left ("String not found", new_pos)
 
 parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
