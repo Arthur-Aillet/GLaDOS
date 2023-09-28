@@ -3,21 +3,6 @@ module ParserSpec (parserTests) where
 import Test.HUnit
 import PositionType (Position(..))
 import ParserType
-import ParserFunction (parseChar
-          , parseAnyChar
-          , parseOr
-          , parseAnd
-          , parseMany
-          , parseSome
-          , parseDigit
-          , parseUInt
-          , parseNegInt
-          , parseInt
-          , parseWithSpace
-          , parseOpeningParenthesis
-          , parseClosingParenthesis
-          , parsePair
-          , parseList)
 
 parserTests :: Test
 parserTests = TestList
