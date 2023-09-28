@@ -63,7 +63,7 @@ parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
 
 parseNegInt :: Parser Int
-parseNegInt = (\_ x -> x * (-1)) <$> parseChar '-' <*> parseUInt
+parseNegInt = (* (-1)) <$> (parseChar '-' *> parseUInt)
 
 parseInt :: Parser Int
 parseInt = parseNegInt <|> parseUInt
