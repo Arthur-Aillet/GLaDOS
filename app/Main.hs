@@ -22,16 +22,25 @@ withErr msg parser = Parser $ \string pos -> case runParser parser string pos of
 failingWith :: String -> Parser a
 failingWith string = Parser (\_ pos -> Left (string, pos))
 
-parseChar :: Char -> Parser Char
-parseChar '\n' = Parser $ \string pos -> case string of
+parseAChar :: Parser Char
+parseAChar = Parser $ \string pos -> case string of
   ('\n' : xs) -> Right ('\n', xs, moveCursor pos True)
+  (x : xs) ->  Right (x, xs, moveCursor pos False)
   [] -> Left ("Char not present in empty list", pos)
-  _ -> Left ("Invalid char found", pos)
-parseChar char = Parser $ \string pos -> case string of
-  (x : xs)
-    | x == char -> Right (x, xs, moveCursor pos False)
+
+parseChar :: Char -> Parser Char
+parseChar x = Parser $ \string pos -> case runParser parseAChar string pos of
+  Right (char, new_str, new_pos)
+    | x == char -> Right (char, new_str, new_pos)
     | otherwise -> Left ("Invalid char found", moveCursor pos False)
-  [] -> Left ("Char not present in empty list", pos)
+  Left (_, pos) -> Left ("Char not present in empty list", pos)
+
+parseNotChar :: Char -> Parser Char
+parseNotChar x = Parser $ \string pos -> case runParser parseAChar string pos of
+  Right (char, new_str, new_pos)
+    | x == char -> Left ("Invalid char found", moveCursor pos False)
+    | otherwise -> Right (char, new_str, new_pos)
+  Left (_, pos) -> Left ("Char not present in empty list", pos)
 
 parseAnyChar :: [Char] -> Parser Char
 parseAnyChar = foldl
@@ -64,13 +73,22 @@ parseDigit = parseAnyChar ['0' .. '9']
 parseBool :: Parser Bool
 parseBool = (== 't') <$> (parseChar '#' *> parseAnyChar ['f', 't'])
 
-parseSymbole :: String -> Parser String
-parseSymbole string = Parser $ \str pos -> 
+parseSymbol :: String -> Parser String
+parseSymbol string = Parser $ \str pos -> 
   case runParser (parseSome (parseAnyChar (['a'..'z'] ++ ['A'..'Z']))) str pos of
-    Right (found, s, p) -> if found == string 
-      then Right (found, s, p) 
-      else Left ("Invalid string found", p)
+    Right (found, s, p)
+      | found == string -> Right (found, s, p) 
+      | otherwise -> Left ("Invalid string found", p)
     Left (_, new_pos) -> Left ("String not found", new_pos)
+
+parseOpeningQuote :: Parser Char
+parseOpeningQuote = withErr "Missing opening Quote" (parseChar '"')
+
+parseClosingQuote :: Parser Char
+parseClosingQuote = withErr "Missing closing Quote" (parseChar '"')
+
+parseString :: Parser String
+parseString = parseOpeningQuote *> parseMany (parseNotChar '"') <* parseClosingQuote
 
 parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
