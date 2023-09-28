@@ -8,6 +8,7 @@
 import Control.Applicative (Alternative ((<|>)))
 import ParserType (Parser (..))
 import PositionType (moveCursor)
+import Data.Bool (Bool)
 
 main :: IO ()
 main = putStrLn "Hello, World!"
@@ -58,6 +59,9 @@ parseSome parse = (:) <$> parse <*> parseMany parse
 
 parseDigit :: Parser Char
 parseDigit = parseAnyChar ['0' .. '9']
+
+parseBool :: Parser Bool
+parseBool = (== 't') <$> (parseChar '#' *> parseAnyChar ['f', 't'])
 
 parseUInt :: Parser Int
 parseUInt = read <$> parseSome parseDigit
