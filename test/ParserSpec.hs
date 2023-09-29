@@ -28,6 +28,8 @@ parserTests = TestList
           , "parseWithSpace" ~: parseWithSpaceTests
           , "parseOpeningParenthesis" ~: parseOpeningParenthesisTests
           , "parseClosingParenthesis" ~: parseClosingParenthesisTests
+          , "parseOpeningQuote" ~: parseOpeningQuoteTests
+          , "parseClosingQuote" ~: parseClosingQuoteTests
           , "parsePair" ~: parsePairTests
           , "parseList" ~: parseListTests
           ]
@@ -157,6 +159,18 @@ parseClosingParenthesisTests :: Test
 parseClosingParenthesisTests = TestList
   [ "Test 1" ~: (Right (')',"",(getPosition 1 0))) @=? (runParser parseClosingParenthesis ")" defaultPosition)
   , "Test 2" ~: (Left ("Missing closing parenthesis",(getPosition 1 0))) @=? (runParser parseClosingParenthesis "(hello world!)" defaultPosition)
+  ]
+
+parseOpeningQuoteTests :: Test
+parseOpeningQuoteTests = TestList
+  [ "Test 1" ~: (Right ('\"',"hello world!\"",(getPosition 1 0))) @=? (runParser parseOpeningQuote "\"hello world!\"" defaultPosition)
+  , "Test 2" ~: (Left ("Missing opening Quote",(getPosition 1 0))) @=? (runParser parseOpeningQuote "hello world!\"" defaultPosition)
+  ]
+
+parseClosingQuoteTests :: Test
+parseClosingQuoteTests = TestList
+  [ "Test 1" ~: (Right ('\"',"",(getPosition 1 0))) @=? (runParser parseClosingQuote "\"" defaultPosition)
+  , "Test 2" ~: (Left ("Missing closing Quote",(getPosition 1 0))) @=? (runParser parseClosingQuote "(hello world!)" defaultPosition)
   ]
 
 parsePairTests :: Test
