@@ -21,10 +21,17 @@ re: fclean all
 quick:
 	ghc app/*.hs src/*.hs -o $(NAME)
 
+format:
+	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
+	ormolu -m inplace $${sourceFiles[*]}
+
+format_check:
+	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
+	ormolu -m 'check' $${sourceFiles[*]}
 test-run:
 	stack test --pedantic --coverage
 	stack hpc report --all --destdir test/coverage
 
 test: test-run
 
-.PHONY: all clean fclean re quick test-run
+.PHONY: all clean fclean re quick test-run format format-check
