@@ -19,7 +19,7 @@ parserTests = TestList
           , "parseOr" ~: parseOrTests
           , "parseAnd" ~: parseAndTests
           , "parseMany" ~: parseManyTests
-          -- , parseSomeTests
+          , "parseSome" ~: parseSomeTests
           -- , parseDigitTests
           -- , parseUIntTests
           -- , parseNegIntTests
@@ -83,10 +83,10 @@ parseManyTests = TestList
   [ "Test 1" ~: (Right ("      ","hello world!",(getPosition 6))) @=? (runParser (parseMany (parseChar ' ')) "      hello world!" defaultPosition)
   ]
 
--- parseSomeTests :: Test -- à compléter
--- parseSomeTests = TestList
---   [ "parseSome Test 1" ~: assertEqual "Should return the string without spaces at the start" (runParser (parseSome (parseChar ' ')) "      hello world!    " defaultPosition) (Right ("      ","hello world!    ",(Position {line = 0, char = 6})))
---   ]
+parseSomeTests :: Test -- à compléter
+parseSomeTests = TestList
+  [ "Test 1" ~: (Right ("      ","hello world!",(getPosition 6))) @=? (runParser (parseSome (parseChar ' ')) "      hello world!" defaultPosition)
+  ]
 
 -- parseDigitTests :: Test -- à compléter
 -- parseDigitTests = TestList
