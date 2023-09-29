@@ -14,6 +14,7 @@ parserTests :: Test
 parserTests = TestList
           [ "defaultPosition" ~: defaultPositionTest
           , "moveCursor" ~: moveCursorTests
+          , "parseBool" ~: parseBoolTests
           , "parseChar" ~: parseCharTests
           , "parseAnyChar" ~: parseAnyCharTests
           , "parseOr" ~: parseOrTests
@@ -43,6 +44,13 @@ moveCursorTests = TestList
   , "Move cursor to the next line" ~: (getPosition 1 0) @=? (moveCursor (getPosition 0 0) False)
   ]
 
+parseACharTests :: Test
+parseACharTests = TestList
+  [ "delete the first character '\n'" ~: (Right ('\n', "hello world!", (getPosition 0 1))) @=? (runParser parseAChar "\nhello world!" defaultPosition)
+  , "delete the first character 'h'" ~: (Right ('h', "ello world!", (getPosition 1 0))) @=? (runParser (parseChar 'h') "hello world!" defaultPosition)
+  , "Error '\n'" ~: (Left ("Char not present in empty list", getPosition 0 0)) @=? (runParser parseAChar "" defaultPosition)
+  ]
+
 parseCharTests :: Test
 parseCharTests = TestList
   [ "delete the first character '\n'" ~: (Right ('\n', "hello world!", (getPosition 0 1))) @=? (runParser (parseChar '\n') "\nhello world!" defaultPosition)
@@ -56,6 +64,14 @@ parseAnyCharTests = TestList
   , "check if first char is in 'c\n'" ~: (Right ('c',"oucou\n", (getPosition 1 0))) @=? (runParser (parseAnyChar "c\n") "coucou\n" defaultPosition)
   , "check if first char is in 'rem'" ~: (Left ("Char not found in list", (getPosition 0 0))) @=? (runParser (parseAnyChar "rem" ) "zero\n" defaultPosition)
   , "check if first char is in ''" ~: (Left ("Char not found in list", (getPosition 0 0))) @=? (runParser (parseAnyChar "" ) "zero\n" defaultPosition)
+  ]
+
+parseBoolTests :: Test
+parseBoolTests = TestList
+  [ "True" ~: (Right (True, " foo", getPosition 2 0)) @=? (runParser parseBool "#t foo" defaultPosition)
+  , "False" ~: (Right (False, "", getPosition 2 0)) @=? (runParser parseBool "#f" defaultPosition)
+  , "Empty list" ~: (Left ("Char not present in empty list", getPosition 0 0)) @=? (runParser parseBool "" defaultPosition)
+  , "just #" ~: (Left ("Char not found in list", getPosition 1 0)) @=? (runParser parseBool "#" defaultPosition)
   ]
 
 parseOrTests :: Test
