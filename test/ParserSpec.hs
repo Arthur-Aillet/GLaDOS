@@ -16,6 +16,7 @@ parserTests = TestList
           , "moveCursor" ~: moveCursorTests
           , "parseBool" ~: parseBoolTests
           , "parseChar" ~: parseCharTests
+          , "parseNotChar" ~: parseNotCharTests
           , "parseAnyChar" ~: parseAnyCharTests
           , "parseOr" ~: parseOrTests
           , "parseAnd" ~: parseAndTests
@@ -55,9 +56,16 @@ parseACharTests = TestList
 
 parseCharTests :: Test
 parseCharTests = TestList
-  [ "delete the first character '\n'" ~: (Right ('\n', "hello world!", (getPosition 0 1))) @=? (runParser (parseChar '\n') "\nhello world!" defaultPosition)
-  , "delete the first character 'h'" ~: (Right ('h', "ello world!", (getPosition 1 0))) @=? (runParser (parseChar 'h') "hello world!" defaultPosition)
-  , "Error '\n'" ~: (Left ("Invalid char found", getPosition 1 0)) @=? (runParser (parseChar '\n') "hello world!" defaultPosition)
+  [ "Test 1" ~: (Right ('\n', "hello world!", (getPosition 0 1))) @=? (runParser (parseChar '\n') "\nhello world!" defaultPosition)
+  , "Test 2" ~: (Right ('h', "ello world!", (getPosition 1 0))) @=? (runParser (parseChar 'h') "hello world!" defaultPosition)
+  , "Test 3" ~: (Left ("Invalid char found", getPosition 1 0)) @=? (runParser (parseChar '\n') "hello world!" defaultPosition)
+  ]
+
+parseNotCharTests :: Test
+parseNotCharTests = TestList
+  [ "Test 1" ~: (Left ("Invalid char found", (getPosition 1 0))) @=? (runParser (parseNotChar '\n') "\nhello world!" defaultPosition)
+  , "Test 2" ~: (Left ("Invalid char found", (getPosition 1 0))) @=? (runParser (parseNotChar 'h') "hello world!" defaultPosition)
+  , "Test 3" ~: (Right ('h',"ello world!", getPosition 1 0)) @=? (runParser (parseNotChar '\n') "hello world!" defaultPosition)
   ]
 
 parseAnyCharTests :: Test
