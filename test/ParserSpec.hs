@@ -25,7 +25,7 @@ parserTests = TestList
           , "parseNegInt" ~: parseNegIntTests
           , "parseInt" ~: parseIntTests
           , "parseWithSpace" ~: parseWithSpaceTests
-          -- , parseOpeningParenthesisTests
+          , "parseOpeningParenthesis" ~: parseOpeningParenthesisTests
           -- , parseClosingParenthesisTests
           -- , parsePairTests
           -- , parseListTests
@@ -113,10 +113,10 @@ parseWithSpaceTests = TestList
   [ "Test 1" ~: (Right ('h',"ello world!",(getPosition 6))) @=? (runParser (parseWithSpace (parseChar 'h')) "     hello world!" defaultPosition)
   ]
 
--- parseOpeningParenthesisTests :: Test -- à compléter
--- parseOpeningParenthesisTests = TestList
---   [ "parseOpeningParenthesis Test 1" ~: assertEqual "Should return" (runParser parseOpeningParenthesis "(hello world!)" defaultPosition) (Right ('(',"hello world!)",(getPosition 5)))
---   ]
+parseOpeningParenthesisTests :: Test -- à compléter
+parseOpeningParenthesisTests = TestList
+  [ "Test 1" ~: (Right ('(',"hello world!)",(getPosition 2))) @=? (runParser parseOpeningParenthesis "(hello world!)" defaultPosition)
+  ]
 
 -- parseClosingParenthesisTests :: Test -- à compléter
 -- parseClosingParenthesisTests = TestList
