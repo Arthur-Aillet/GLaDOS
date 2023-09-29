@@ -21,7 +21,7 @@ parserTests = TestList
           , "parseMany" ~: parseManyTests
           , "parseSome" ~: parseSomeTests
           , "parseDigit" ~: parseDigitTests
-          -- , parseUIntTests
+          , "parseUInt" ~: parseUIntTests
           -- , parseNegIntTests
           -- , parseIntTests
           -- , parseWithSpaceTests
@@ -93,10 +93,10 @@ parseDigitTests = TestList
   [ "Test 1" ~: (Right ('6'," 5 3 7 4 4",(getPosition 2))) @=? (runParser parseDigit "6 5 3 7 4 4" defaultPosition)
   ]
 
--- parseUIntTests :: Test -- à compléter
--- parseUIntTests = TestList
---   [ "parseUInt Test 1" ~: assertEqual "Should return" (runParser parseDigit "6 5 3 7 4 4" defaultPosition) (Right (6," 5 3 7 4 4",(getPosition 5)))
---   ]
+parseUIntTests :: Test -- à compléter
+parseUIntTests = TestList
+  [ "Test 1" ~: (Right ('6'," 5 3 7 4 4",(getPosition 2))) @=? (runParser parseDigit "6 5 3 7 4 4" defaultPosition)
+  ]
 
 -- parseNegIntTests :: Test -- à compléter
 -- parseNegIntTests = TestList
