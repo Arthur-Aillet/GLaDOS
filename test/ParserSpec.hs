@@ -27,7 +27,7 @@ parserTests = TestList
           , "parseWithSpace" ~: parseWithSpaceTests
           , "parseOpeningParenthesis" ~: parseOpeningParenthesisTests
           , "parseClosingParenthesis" ~: parseClosingParenthesisTests
-          -- , parsePairTests
+          , "parsePair" ~: parsePairTests
           -- , parseListTests
           ]
 
@@ -36,6 +36,7 @@ getPosition 0 = Position {line = 0, char = 0}
 getPosition 1 = Position {line = 1, char = 0}
 getPosition 2 = Position {line = 0, char = 1}
 getPosition 3 = Position {line = 0, char = 2}
+getPosition 4 = Position {line = 0, char = 4}
 getPosition 6 = Position {line = 0, char = 6}
 getPosition _ = defaultPosition
 
@@ -123,10 +124,10 @@ parseClosingParenthesisTests = TestList
   [ "Test 1" ~: (Right (')',"",(getPosition 2))) @=? (runParser parseClosingParenthesis ")" defaultPosition)
   ]
 
--- parsePairTests :: Test -- à compléter
--- parsePairTests = TestList
---   [ "parsePair Test 1" ~: assertEqual "Should return" (runParser (parsePair (parseChar '5')) "(55)" defaultPosition) (Right (('5','5'),"",(Position {line = 0, char = 4})))
---   ]
+parsePairTests :: Test -- à compléter
+parsePairTests = TestList
+  [ "Test 1" ~: (Right (('5','5'),"", (getPosition 4))) @=? (runParser (parsePair (parseChar '5')) "(55)" defaultPosition)
+  ]
 
 -- parseListTests :: Test -- à compléter
 -- parseListTests = TestList
