@@ -22,8 +22,8 @@ parserTests = TestList
           , "parseSome" ~: parseSomeTests
           , "parseDigit" ~: parseDigitTests
           , "parseUInt" ~: parseUIntTests
-          , "parseNegIntm" ~: parseNegIntTests
-          -- , parseIntTests
+          , "parseNegInt" ~: parseNegIntTests
+          , "parseInt" ~: parseIntTests
           -- , parseWithSpaceTests
           -- , parseOpeningParenthesisTests
           -- , parseClosingParenthesisTests
@@ -103,10 +103,10 @@ parseNegIntTests = TestList
   [ "Test 1" ~: (Right (-6, " 5 3 7 4 4",(getPosition 3))) @=? (runParser parseNegInt "-6 5 3 7 4 4" defaultPosition)
   ]
 
--- parseIntTests :: Test -- à compléter
--- parseIntTests = TestList
---   [ "parseInt Test 1" ~: assertEqual "Should return" (runParser parseInt "-6 5 3 7 4 4" defaultPosition) (Right (-6, " 5 3 7 4 4",(getPosition 6)))
---   ]
+parseIntTests :: Test -- à compléter
+parseIntTests = TestList
+  [ "Test 1" ~: (Right (-6, " 5 3 7 4 4",(getPosition 3))) @=? (runParser parseInt "-6 5 3 7 4 4" defaultPosition)
+  ]
 
 -- parseWithSpaceTests :: Test -- à compléter
 -- parseWithSpaceTests = TestList
