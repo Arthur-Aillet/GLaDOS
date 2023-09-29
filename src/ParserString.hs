@@ -1,14 +1,14 @@
--- 
+--
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
 -- ParseString.hs
- --
+--
 
 module ParserString (module ParserString) where
 
+import ParserChar (parseAnyChar, parseClosingQuote, parseNotChar, parseOpeningQuote)
 import ParserType (Parser (..))
-import ParserChar (parseAnyChar, parseOpeningQuote, parseClosingQuote, parseNotChar)
 import SyntaxParser (parseMany, parseSome)
 
 parseSymbol :: String -> Parser String

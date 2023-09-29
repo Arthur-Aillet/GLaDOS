@@ -7,10 +7,10 @@
 
 module ParserChar (module ParserChar) where
 
-import ParserType (Parser (..))
 import Control.Applicative (Alternative ((<|>)))
+import ParserError (failingWith, withErr)
+import ParserType (Parser (..))
 import PositionType (moveCursor)
-import ParserError (withErr, failingWith)
 
 parseAChar :: Parser Char
 parseAChar = Parser $ \string pos -> case string of

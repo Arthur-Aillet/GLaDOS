@@ -5,7 +5,7 @@
 -- Position type
 -}
 
-module PositionType (Position(..), defaultPosition, moveCursor) where
+module PositionType (Position (..), defaultPosition, moveCursor) where
 
 data Position = Position {line :: Int, char :: Int} deriving (Show, Eq)
 

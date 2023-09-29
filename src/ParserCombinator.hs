@@ -1,9 +1,9 @@
--- 
+--
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
 -- ParserCombinator.hs
- --
+--
 
 module ParserCombinator (module ParserCombinator) where
 

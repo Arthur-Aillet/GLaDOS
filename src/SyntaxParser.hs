@@ -1,14 +1,14 @@
--- 
+--
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
 -- SyntaxParser.hs
- --
+--
 
 module SyntaxParser (module SyntaxParser) where
 
+import ParserChar (parseChar, parseClosingParenthesis, parseOpeningParenthesis)
 import ParserType (Parser (..))
-import ParserChar (parseChar, parseOpeningParenthesis, parseClosingParenthesis)
 
 parseMany :: Parser a -> Parser [a]
 parseMany parse = Parser $ \string pos -> case runParser parse string pos of
