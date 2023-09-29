@@ -16,7 +16,7 @@ parserTests = TestList
           , "moveCursor: " ~: moveCursorTests
           , "parseChar: " ~: parseCharTests
           , "parseAnyChar: " ~: parseAnyCharTests
-          -- , parseOrTests
+          , "parseOr: " ~: parseOrTests
           -- , parseAndTests
           -- , parseManyTests
           -- , parseSomeTests
@@ -59,13 +59,13 @@ parseAnyCharTests = TestList
   , "check if first char is in 'rem'" ~: (Left ("Char not found in list", (getPosition 0))) @=? (runParser (parseAnyChar "re" ) "zero\n" defaultPosition)
   ]
 
--- parseOrTests :: Test
--- parseOrTests = TestList
---   [ "parseOr: Test 1" ~: assertEqual "Should return the first result" (runParser (parseOr (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition) (Right ('(',"hello world)",(getPosition 5)))
---   , "parseOr: Test 2" ~: assertEqual "Should return the second result" (runParser (parseOr (parseChar 'f') (parseChar '(')) "(hello world)" defaultPosition) (Right ('(',"hello world)",(getPosition 5)))
---   , "parseOr: Test 3" ~: assertEqual "Should return the first result because results are the same" (runParser (parseOr (parseChar '(') (parseChar '(')) "(hello world)" defaultPosition) (Right ('(',"hello world)",(getPosition 5)))
---   , "parseOr: Test 4" ~: assertEqual "Should return 'Invalid char found'" (runParser (parseOr (parseChar 'f') (parseChar 'f')) "(hello world)" defaultPosition) (Left ("Invalid char found",(getPosition 5)))
---   ]
+parseOrTests :: Test
+parseOrTests = TestList
+  [ "Test 1" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition)
+  , "Test 2" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar 'f') (parseChar '(')) "(hello world)" defaultPosition)
+  , "Test 3" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar '(') (parseChar '(')) "(hello world)" defaultPosition)
+  , "Test 4" ~: (Left ("Invalid char found",(getPosition 0))) @=? (runParser (parseOr (parseChar 'f') (parseChar 'f')) "(hello world)" defaultPosition)
+  ]
 
 -- parseAndWithTests :: Test
 -- parseAndWithTests = TestList
