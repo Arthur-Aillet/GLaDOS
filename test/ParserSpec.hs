@@ -15,9 +15,12 @@ parserTests = TestList
           [ "defaultPosition" ~: defaultPositionTest
           , "moveCursor" ~: moveCursorTests
           , "parseBool" ~: parseBoolTests
+          , "parseAChar" ~: parseACharTests
           , "parseChar" ~: parseCharTests
           , "parseNotChar" ~: parseNotCharTests
           , "parseAnyChar" ~: parseAnyCharTests
+          , "parseString" ~: parseStringTests
+          , "parseSymbol" ~: parseSymbolTests
           , "parseOr" ~: parseOrTests
           , "parseAnd" ~: parseAndTests
           , "parseMany" ~: parseManyTests
@@ -84,6 +87,21 @@ parseBoolTests = TestList
   , "just #" ~: (Left ("Char not found in list", getPosition 1 0)) @=? (runParser parseBool "#" defaultPosition)
   ]
 
+parseSymbolTests :: Test
+parseSymbolTests = TestList
+  [ "Test 1" ~: (Right ("azerty"," hello", (getPosition 6 0))) @=? (runParser (parseSymbol "azerty") "azerty hello" defaultPosition)
+  , "Test 2" ~: (Left ("Invalid string found", (getPosition 6 0))) @=? (runParser (parseSymbol "ezryta") "azerty hello" defaultPosition)
+  , "Test 3" ~: (Left ("String not found", (getPosition 0 0))) @=? (runParser (parseSymbol "azerty") "" defaultPosition)
+  ]
+
+parseStringTests :: Test
+parseStringTests = TestList
+  [ "Test 1" ~: (Right ("!world hello", "", getPosition 14 0)) @=? (runParser parseString "\"!world hello\"" defaultPosition)
+  , "Test 2" ~: (Left ("Missing opening Quote", (getPosition 0 0))) @=? (runParser parseString "" defaultPosition)
+  , "Test 3" ~: (Left ("Missing opening Quote", (getPosition 1 0))) @=? (runParser parseString "foo" defaultPosition)
+  , "Test 4" ~: (Left ("Missing closing Quote", (getPosition 4 0))) @=? (runParser parseString "\"bar" defaultPosition)
+  ]
+
 parseOrTests :: Test
 parseOrTests = TestList
   [ "Test 1" ~: (Right ('(',"hello world)",(getPosition 1 0))) @=? (runParser (parseOr (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition)
@@ -91,11 +109,6 @@ parseOrTests = TestList
   , "Test 3" ~: (Right ('(',"hello world)",(getPosition 1 0))) @=? (runParser (parseOr (parseChar '(') (parseChar '(')) "(hello world)" defaultPosition)
   , "Test 4" ~: (Left ("Invalid char found",(getPosition 1 0))) @=? (runParser (parseOr (parseChar 'f') (parseChar 'f')) "(hello world)" defaultPosition)
   ]
-
--- parseAndWithTests :: Test
--- parseAndWithTests = TestList
---   [ "parseAndWith: "
---   ]
 
 parseAndTests :: Test
 parseAndTests = TestList
