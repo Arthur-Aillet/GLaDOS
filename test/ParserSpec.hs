@@ -12,12 +12,12 @@ import SyntaxParser
 
 parserTests :: Test
 parserTests = TestList
-          [ "defaultPosition: " ~: defaultPositionTest
-          , "moveCursor: " ~: moveCursorTests
-          , "parseChar: " ~: parseCharTests
-          , "parseAnyChar: " ~: parseAnyCharTests
-          , "parseOr: " ~: parseOrTests
-          -- , parseAndTests
+          [ "defaultPosition" ~: defaultPositionTest
+          , "moveCursor" ~: moveCursorTests
+          , "parseChar" ~: parseCharTests
+          , "parseAnyChar" ~: parseAnyCharTests
+          , "parseOr" ~: parseOrTests
+          , "parseAnd" ~: parseAndTests
           -- , parseManyTests
           -- , parseSomeTests
           -- , parseDigitTests
@@ -64,7 +64,7 @@ parseOrTests = TestList
   [ "Test 1" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition)
   , "Test 2" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar 'f') (parseChar '(')) "(hello world)" defaultPosition)
   , "Test 3" ~: (Right ('(',"hello world)",(getPosition 2))) @=? (runParser (parseOr (parseChar '(') (parseChar '(')) "(hello world)" defaultPosition)
-  , "Test 4" ~: (Left ("Invalid char found",(getPosition 0))) @=? (runParser (parseOr (parseChar 'f') (parseChar 'f')) "(hello world)" defaultPosition)
+  , "Test 4" ~: (Left ("Invalid char found",(getPosition 2))) @=? (runParser (parseOr (parseChar 'f') (parseChar 'f')) "(hello world)" defaultPosition)
   ]
 
 -- parseAndWithTests :: Test
@@ -72,10 +72,10 @@ parseOrTests = TestList
 --   [ "parseAndWith: "
 --   ]
 
--- parseAndTests :: Test -- à compléter
--- parseAndTests = TestList
---   [ "parseAnd: Test 1" ~: assertEqual "Should return Left" (runParser (parseAnd (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition) (Left ("Invalid char found",(getPosition 6)))
---   ]
+parseAndTests :: Test -- à compléter
+parseAndTests = TestList
+  [ "Test 1" ~: (Left ("Invalid char found",(getPosition 3))) @=? (runParser (parseAnd (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition)
+  ]
 
 -- parseManyTests :: Test -- à compléter
 -- parseManyTests = TestList
