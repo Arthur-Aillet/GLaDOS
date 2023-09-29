@@ -18,7 +18,7 @@ parserTests = TestList
           , "parseAnyChar" ~: parseAnyCharTests
           , "parseOr" ~: parseOrTests
           , "parseAnd" ~: parseAndTests
-          -- , parseManyTests
+          , "parseMany" ~: parseManyTests
           -- , parseSomeTests
           -- , parseDigitTests
           -- , parseUIntTests
@@ -36,6 +36,7 @@ getPosition 0 = Position {line = 0, char = 0}
 getPosition 1 = Position {line = 1, char = 0}
 getPosition 2 = Position {line = 0, char = 1}
 getPosition 3 = Position {line = 0, char = 2}
+getPosition 6 = Position {line = 0, char = 6}
 getPosition _ = defaultPosition
 
 defaultPositionTest :: Test
@@ -77,10 +78,10 @@ parseAndTests = TestList
   [ "Test 1" ~: (Left ("Invalid char found",(getPosition 3))) @=? (runParser (parseAnd (parseChar '(') (parseChar 'f')) "(hello world)" defaultPosition)
   ]
 
--- parseManyTests :: Test -- à compléter
--- parseManyTests = TestList
---   [ "parseMany: Test 1" ~: assertEqual "Should return the string without spaces at the start" (runParser (parseMany (parseChar ' ')) "      hello world!    " defaultPosition) (Right ("      ","hello world!    ",(Position {line = 0, char = 6})))
---   ]
+parseManyTests :: Test -- à compléter
+parseManyTests = TestList
+  [ "Test 1" ~: (Right ("      ","hello world!",(getPosition 6))) @=? (runParser (parseMany (parseChar ' ')) "      hello world!" defaultPosition)
+  ]
 
 -- parseSomeTests :: Test -- à compléter
 -- parseSomeTests = TestList
