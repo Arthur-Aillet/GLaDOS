@@ -15,7 +15,7 @@ parserTests = TestList
           [ "defaultPosition: " ~: defaultPositionTest
           , "moveCursor: " ~: moveCursorTests
           , "parseChar: " ~: parseCharTests
-          -- , parseAnyCharTests
+          , "parseAnyChar: " ~: parseAnyCharTests
           -- , parseOrTests
           -- , parseAndTests
           -- , parseManyTests
@@ -38,14 +38,8 @@ getPosition 2 = Position {line = 0, char = 1}
 getPosition 3 = Position {line = 0, char = 2}
 getPosition _ = defaultPosition
 
--- getParser :: String -> 
--- getParser "ParseAnyChar 1" = runParser (parseAnyChar "\nc") "coucou\n" defaultPosition
--- getParser "ParseAnyChar 2" = runParser (parseAnyChar "c\n") "coucou\n" defaultPosition
--- getParser "ParseAnyChar 3" = runParser (parseAnyChar "re" ) "zero\n" defaultPosition
-
-
 defaultPositionTest :: Test
-defaultPositionTest = TestCase $ assertEqual "default position is line = 0, char = 0" (getPosition 0) (defaultPosition)
+defaultPositionTest = TestCase $ assertEqual "default position is line = 0, char = 0" (getPosition 0) defaultPosition
 
 moveCursorTests :: Test
 moveCursorTests = TestList
@@ -58,12 +52,12 @@ parseCharTests = TestList
   [ "delete the first character '\n'" ~: (Right ('\n', "hello world!", (getPosition 1))) @=? (runParser (parseChar '\n') "\nhello world!" defaultPosition)
   ]
 
--- parseAnyCharTests :: Test -- à completer
--- parseAnyCharTests = TestList
---   [ "parseAnyChar: check if first char is in '\nc'" ~: assertEqual "Should return the string whitout the first char" (getParser "ParseAnyChar 1") (Right ('c',"oucou\n", (getPosition 5)))
---   , "parseAnyChar: check if first char is in 'c\n'" ~: assertEqual "Should return the string whitout the first char" (getParser "ParseAnyChar 2") (Right ('c',"oucou\n", (getPosition 5)))
---   , "parseAnyChar: check if first char is in 'rem'" ~: assertEqual "Should return 'Invalid char found'" (getParser "ParseAnyChar 3") (Left ("Invalid char found",Position getPosition 5))
---   ]
+parseAnyCharTests :: Test -- à completer
+parseAnyCharTests = TestList
+  [ "check if first char is in '\nc'" ~: (Right ('c',"oucou\n", (getPosition 2))) @=? (runParser (parseAnyChar "\nc") "coucou\n" defaultPosition)
+  , "check if first char is in 'c\n'" ~: (Right ('c',"oucou\n", (getPosition 2))) @=? (runParser (parseAnyChar "c\n") "coucou\n" defaultPosition)
+  , "check if first char is in 'rem'" ~: (Left ("Char not found in list", (getPosition 0))) @=? (runParser (parseAnyChar "re" ) "zero\n" defaultPosition)
+  ]
 
 -- parseOrTests :: Test
 -- parseOrTests = TestList
