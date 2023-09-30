@@ -26,6 +26,14 @@ cmd = do
     mapM_ (\s -> putStr (' ':s)) args
     putStrLn ""
 
+getInstructions :: IO ()
+getInstructions = do
+                    putStr ">"
+                    line <- getLine
+                    exit <- loopOnCommands emptyContext (sExprParser line)
+                    getInstructions
+
+
 -- print the stdin or fail if stdin is a tty
 cat :: IO ()
 cat = do
@@ -47,8 +55,8 @@ testInput = do
     contents <- hGetContents' stdin
     return $ sExprParser contents
 
-main :: IO ExitCode
-main = do
+main2 :: IO ExitCode
+main2 = do
     expr <- testInput
     loopOnCommands emptyContext expr
 
@@ -62,9 +70,15 @@ loopOnCommands ctx (expr:xs) = case sexprToAST expr of
 
 -- wrap the scraper in a timeout loop to prevent apparent crash should
 --  measures to avoid waiting on input to fail
-main2 :: IO ExitCode
-main2 = do
+main :: IO ExitCode
+main = do
+  bool <- hIsTerminalDevice stdin
+  if bool
+    then do
+      getInstructions
+      exitSuccess
+    else do
     status <- timeout (10 * 1000 * 1000) scraper
     case status of
-        Just () -> exitSuccess
-        Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
+      Just () -> exitSuccess
+      Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
