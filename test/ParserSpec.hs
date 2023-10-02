@@ -184,10 +184,10 @@ parseIntTests =
 parseFloatTest :: Test
 parseFloatTest =
   TestList
-    [ "Test 1" ~: (Right(123.123, "", getPosition 7 0)) @=? (runParser parseFloat "123.123" defaultPosition),
-      "Test 2" ~: (Right(-123.123, "", getPosition 8 0)) @=? (runParser parseFloat "-123.123" defaultPosition),
-      "Test 3" ~: (Left("Invalid char found", (getPosition 1 0))) @=? (runParser parseFloat "123" defaultPosition),
-      "Test 4" ~: (Left("Char not present in empty list", (getPosition 0 0))) @=? (runParser parseFloat "" defaultPosition)
+    [ "Test 1" ~: (Right (123.123, "", getPosition 7 0)) @=? (runParser parseFloat "123.123" defaultPosition),
+      "Test 2" ~: (Right (-123.123, "", getPosition 8 0)) @=? (runParser parseFloat "-123.123" defaultPosition),
+      "Test 3" ~: (Left ("Invalid char found", (getPosition 1 0))) @=? (runParser parseFloat "123" defaultPosition),
+      "Test 4" ~: (Left ("Char not present in empty list", (getPosition 0 0))) @=? (runParser parseFloat "" defaultPosition)
     ]
 
 parseWithSpaceTests :: Test

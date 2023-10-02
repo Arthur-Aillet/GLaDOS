@@ -10,7 +10,7 @@ module ParserInt (module ParserInt) where
 import Control.Applicative (Alternative ((<|>)))
 import ParserChar (parseChar, parseDigit)
 import ParserType (Parser (..))
-import SyntaxParser (parseSome, parseMany)
+import SyntaxParser (parseMany, parseSome)
 
 parseStringInt :: Parser String
 parseStringInt = parseSome parseDigit
@@ -25,8 +25,10 @@ parseInt :: Parser Int
 parseInt = parseNegInt <|> parseUInt
 
 parseUFloat :: Parser Float
-parseUFloat = (\intPart charPart -> read (intPart ++ charPart))
-            <$> parseStringInt <*> parseFractionalPart
+parseUFloat =
+  (\intPart charPart -> read (intPart ++ charPart))
+    <$> parseStringInt
+    <*> parseFractionalPart
 
 parseFractionalPart :: Parser String
 parseFractionalPart = ('.' :) <$> (parseChar '.' *> parseMany parseDigit)

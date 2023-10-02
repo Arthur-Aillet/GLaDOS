@@ -8,18 +8,17 @@
 module ParserSExpr (module ParserSExpr) where
 
 import Control.Applicative (Alternative ((<|>)))
-
+import ParserBool (parseBool)
+import ParserChar (parseAnyChar)
+import ParserInt (parseFloat, parseInt)
+import ParserString (parseSym)
 import ParserType (Parser (..))
 import SParser (SExpr (..))
-import SyntaxParser ( parseSome, parseList )
-import ParserInt ( parseInt, parseFloat )
-import ParserBool ( parseBool )
-import ParserChar ( parseAnyChar )
-import ParserString (parseSym)
+import SyntaxParser (parseList, parseSome)
 
 parseSExpr :: Parser SExpr
 parseSExpr =
-    (SList <$> parseList parseSExpr)
+  (SList <$> parseList parseSExpr)
     <|> (SInt <$> parseInt)
     <|> (SFloat <$> parseFloat)
     <|> (SBool <$> parseBool)

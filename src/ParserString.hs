@@ -26,4 +26,4 @@ parseString =
     <* parseClosingQuote
 
 parseSym :: Parser String
-parseSym = parseSome (parseAnyChar (['!'..'\''] ++ ['*'..'~']))
+parseSym = parseSome (parseAnyChar (['!' .. '\''] ++ ['*' .. '~']))
