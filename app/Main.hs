@@ -8,7 +8,6 @@
 module Main (main) where
 
 import AST (Context, emptyContext, evalAST, displayAST)
-import System.Environment (getArgs, getProgName)
 import Converter (sexprToAST)
 import System.Timeout (timeout)
 import System.Exit
@@ -16,6 +15,7 @@ import System.IO (hGetContents', stdin, hIsTerminalDevice, hSetBuffering, stdout
 
 import ParserSExpr
 import PositionType
+import ParserError
 import ParserType (Parser(..))
 import SyntaxParser (parseManyValidOrEmpty)
 
@@ -23,20 +23,20 @@ executeFile :: IO ()
 executeFile = do
   contents <- hGetContents' stdin
   case runParser (parseManyValidOrEmpty parseSExpr) contents defaultPosition of
-    Left (err, pos) -> putStrLn (show err ++ " found at: " ++ show pos) >> exitWith (ExitFailure 84)
+    Left err -> printErr err >> exitWith (ExitFailure 84)
     Right (sexpr, _, _) -> do
       _ <- loopOnCommands emptyContext sexpr
       exitSuccess
 
 getInstructions :: Context -> IO ExitCode
 getInstructions context = do
-  putStr "GLaDOS > "
-  line <- getLine
-  case runParser (parseManyValidOrEmpty parseSExpr) line defaultPosition of
-    Left (err, pos) -> putStrLn (show err ++ " found at: " ++ show pos) >> exitWith (ExitFailure 84)
+  putStr "GLaDOS> "
+  new_line <- getLine
+  case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
+    Left err -> printErr err >> exitWith (ExitFailure 84)
     Right (sexpr, _, _) -> do
-      context <- loopOnCommands context sexpr
-      getInstructions context
+      new_context <- loopOnCommands context sexpr
+      getInstructions new_context
 
 -- wrap the scraper in a timeout loop to prevent apparent crash should
 --  measures to avoid waiting on input to fail
