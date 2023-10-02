@@ -8,7 +8,7 @@
 module Converter (sexprToAST) where
 
 import AST (Ast (Atom, Call, Define, If, Lambda, Symbol))
-import SParser (SExpr (SInt, SList, SSym))
+import ParserSExpr (SExpr (SInt, SList, SSym))
 
 convertArgsContinuous :: [SExpr] -> Maybe [Ast]
 convertArgsContinuous (x : xs) = case convertArgsContinuous xs of
