@@ -7,17 +7,16 @@
 
 module Main (main) where
 
-import AST (Context, emptyContext, evalAST, displayAST)
+import AST (Context, displayAST, emptyContext, evalAST)
 import Converter (sexprToAST)
-import System.Timeout (timeout)
-import System.Exit
-import System.IO (hGetContents', stdin, hIsTerminalDevice, hSetBuffering, stdout, BufferMode(..))
-
-import ParserSExpr
-import PositionType
 import ParserError
-import ParserType (Parser(..))
+import ParserSExpr
+import ParserType (Parser (..))
+import PositionType
 import SyntaxParser (parseManyValidOrEmpty)
+import System.Exit
+import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
+import System.Timeout (timeout)
 
 executeFile :: IO ()
 executeFile = do
@@ -38,14 +37,12 @@ getInstructions context = do
       new_context <- loopOnCommands context sexpr
       getInstructions new_context
 
--- wrap the scraper in a timeout loop to prevent apparent crash should
---  measures to avoid waiting on input to fail
 main :: IO ExitCode
 main = do
-    hSetBuffering stdout NoBuffering
-    bool <- hIsTerminalDevice stdin
-    if bool
-      then getInstructions emptyContext >> exitSuccess
+  hSetBuffering stdout NoBuffering
+  bool <- hIsTerminalDevice stdin
+  if bool
+    then getInstructions emptyContext >> exitSuccess
     else do
       status <- timeout 10000000 executeFile
       case status of

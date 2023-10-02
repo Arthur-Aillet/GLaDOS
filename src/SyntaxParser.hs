@@ -32,12 +32,12 @@ parseOnlySpaces = Parser $ \string pos -> case string of
     Left a -> Left a
 
 parseManyValidOrEmpty :: Parser a -> Parser [a]
-parseManyValidOrEmpty parse = Parser $ \string pos -> case runParser parse string pos of
+parseManyValidOrEmpty parse = Parser $ \st pos -> case runParser parse st pos of
   Right (element, new_str, new_pos) ->
     case runParser (parseManyValidOrEmpty parse) new_str new_pos of
       Left a -> case runParser parseOnlySpaces new_str new_pos of
         Left _ -> Left a
-        Right (_, fd_str, fd_pos) ->  Right ([element], fd_str, fd_pos)
+        Right (_, fd_str, fd_pos) -> Right ([element], fd_str, fd_pos)
       Right (found, fd_str, fd_pos) -> Right (element : found, fd_str, fd_pos)
   Left a -> Left a
 
