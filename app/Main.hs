@@ -18,32 +18,15 @@ import ParserSExpr
 import PositionType
 import ParserType (Parser(..))
 import SyntaxParser (parseManyValidOrEmpty)
--- print the command line, with exec name and all args seperated by a space
--- note the lack of quoting for params containing a space
-cmd :: IO ()
-cmd = do
-    name <- getProgName
-    args <- getArgs
-    putStr name
-    putStr " "
-    mapM_ (\s -> putStr (' ':s)) args
-    putStrLn ""
 
--- print the stdin or fail if stdin is a tty
-cat :: IO ()
-cat = do
-    bool <- hIsTerminalDevice stdin
-    if bool
-        then
-            putStrLn "#ERR: input is tty"
-        else
-            do
-                contents <- hGetContents' stdin
-                pure()
-
--- dump input
-scraper :: IO ()
-scraper =  putStrLn "cmd:" >> cmd >> putStrLn "cat:" >> cat
+executeFile :: IO ()
+executeFile = do
+  contents <- hGetContents' stdin
+  case runParser (parseManyValidOrEmpty parseSExpr) contents defaultPosition of
+    Left (err, pos) -> putStrLn (show err ++ " found at: " ++ show pos) >> exitWith (ExitFailure 84)
+    Right (sexpr, _, _) -> do
+      _ <- loopOnCommands emptyContext sexpr
+      exitSuccess
 
 getInstructions :: Context -> IO ExitCode
 getInstructions context = do
@@ -64,7 +47,7 @@ main = do
     if bool
       then getInstructions emptyContext >> exitSuccess
     else do
-      status <- timeout 10000000 scraper
+      status <- timeout 10000000 executeFile
       case status of
         Just () -> exitSuccess
         Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
