@@ -7,64 +7,44 @@
 
 module Main (main) where
 
-import AST (Context, emptyContext, evalAST, displayAST)
-import System.Environment (getArgs, getProgName)
+import AST (Context, displayAST, emptyContext, evalAST)
 import Converter (sexprToAST)
-import System.Timeout (timeout)
-import System.Exit
-import System.IO (hGetContents', stdin, hIsTerminalDevice, hSetBuffering, stdout, BufferMode(..))
-
+import ParserError
 import ParserSExpr
+import ParserType (Parser (..))
 import PositionType
-import ParserType (Parser(..))
 import SyntaxParser (parseManyValidOrEmpty)
--- print the command line, with exec name and all args seperated by a space
--- note the lack of quoting for params containing a space
-cmd :: IO ()
-cmd = do
-    name <- getProgName
-    args <- getArgs
-    putStr name
-    putStr " "
-    mapM_ (\s -> putStr (' ':s)) args
-    putStrLn ""
+import System.Exit
+import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
+import System.Timeout (timeout)
 
--- print the stdin or fail if stdin is a tty
-cat :: IO ()
-cat = do
-    bool <- hIsTerminalDevice stdin
-    if bool
-        then
-            putStrLn "#ERR: input is tty"
-        else
-            do
-                contents <- hGetContents' stdin
-                pure()
-
--- dump input
-scraper :: IO ()
-scraper =  putStrLn "cmd:" >> cmd >> putStrLn "cat:" >> cat
+executeFile :: IO ()
+executeFile = do
+  contents <- hGetContents' stdin
+  case runParser (parseManyValidOrEmpty parseSExpr) contents defaultPosition of
+    Left err -> printErr err >> exitWith (ExitFailure 84)
+    Right (sexpr, _, _) -> do
+      _ <- loopOnCommands emptyContext sexpr
+      exitSuccess
 
 getInstructions :: Context -> IO ExitCode
 getInstructions context = do
-  putStr "GLaDOS > "
-  line <- getLine
-  case runParser (parseManyValidOrEmpty parseSExpr) line defaultPosition of
-    Left (err, pos) -> putStrLn (show err ++ " found at: " ++ show pos) >> exitWith (ExitFailure 84)
+  putStr "GLaDOS> "
+  new_line <- getLine
+  case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
+    Left err -> printErr err >> exitWith (ExitFailure 84)
     Right (sexpr, _, _) -> do
-      context <- loopOnCommands context sexpr
-      getInstructions context
+      new_context <- loopOnCommands context sexpr
+      getInstructions new_context
 
--- wrap the scraper in a timeout loop to prevent apparent crash should
---  measures to avoid waiting on input to fail
 main :: IO ExitCode
 main = do
-    hSetBuffering stdout NoBuffering
-    bool <- hIsTerminalDevice stdin
-    if bool
-      then getInstructions emptyContext >> exitSuccess
+  hSetBuffering stdout NoBuffering
+  bool <- hIsTerminalDevice stdin
+  if bool
+    then getInstructions emptyContext >> exitSuccess
     else do
-      status <- timeout 10000000 scraper
+      status <- timeout 10000000 executeFile
       case status of
         Just () -> exitSuccess
         Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
