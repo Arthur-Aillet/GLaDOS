@@ -7,7 +7,7 @@
 
 module SyntaxParser (module SyntaxParser) where
 
-import ParserChar (parseChar, parseClosingParenthesis, parseOpeningParenthesis)
+import ParserChar (parseAnyChar, parseClosingParenthesis, parseOpeningParenthesis)
 import ParserType (Parser (..))
 
 parseMany :: Parser a -> Parser [a]
@@ -31,7 +31,7 @@ parseSome parse = (:) <$> parse <*> parseMany parse
 
 parseWithSpace :: Parser a -> Parser a
 parseWithSpace parser =
-  parseMany (parseChar ' ') *> parser <* parseMany (parseChar ' ')
+  parseMany (parseAnyChar [' ', '\n']) *> parser <* parseMany (parseAnyChar [' ', '\n'])
 
 parsePair :: Parser a -> Parser (a, a)
 parsePair parser =
