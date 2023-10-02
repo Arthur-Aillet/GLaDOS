@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
--- ParseChar.hs
---
+-- ParseChar
+-}
 
 module ParserChar (module ParserChar) where
 
@@ -38,14 +38,14 @@ parseChar x = Parser $ \string pos -> case runParser parseAChar string pos of
   Right (char, new_str, new_pos)
     | x == char -> Right (char, new_str, new_pos)
     | otherwise -> Left ("Invalid char found", moveCursor pos False)
-  Left (_, pos) -> Left ("Char not present in empty list", pos)
+  Left (_, new_pos) -> Left ("Char not present in empty list", new_pos)
 
 parseNotChar :: Char -> Parser Char
 parseNotChar x = Parser $ \string pos -> case runParser parseAChar string pos of
   Right (char, new_str, new_pos)
     | x == char -> Left ("Invalid char found", moveCursor pos False)
     | otherwise -> Right (char, new_str, new_pos)
-  Left (_, pos) -> Left ("Char not present in empty list", pos)
+  Left (_, new_pos) -> Left ("Char not present in empty list", new_pos)
 
 parseAnyChar :: [Char] -> Parser Char
 parseAnyChar =

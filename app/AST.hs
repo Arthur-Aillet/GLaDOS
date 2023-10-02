@@ -79,7 +79,7 @@ isBuiltin _ = False
 
 evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
-evalAST ctx (Null) = (ctx, Error "expression has no value")
+evalAST ctx Null = (ctx, Error "expression has no value")
 evalAST ctx (Symbol sym) = case ctx !? sym of
   Just jast -> (ctx, jast)
   Nothing ->

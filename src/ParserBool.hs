@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
--- parseBool.hs
---
+-- parseBool
+-}
 
 module ParserBool (module ParserBool) where
 

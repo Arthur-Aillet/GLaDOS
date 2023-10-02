@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
--- ParseInt.hs
---
+-- ParseInt
+-}
 
 module ParserInt (module ParserInt) where
 

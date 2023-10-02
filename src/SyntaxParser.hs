@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
--- SyntaxParser.hs
---
+-- SyntaxParser
+-}
 
 module SyntaxParser (module SyntaxParser) where
 

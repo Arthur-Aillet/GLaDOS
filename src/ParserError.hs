@@ -1,9 +1,9 @@
---
+{-
 -- EPITECH PROJECT, 2023
 -- Dev_repo
 -- File description:
--- ParseError.hs
---
+-- ParseError
+-}
 
 module ParserError (module ParserError) where
 

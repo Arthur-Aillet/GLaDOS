@@ -13,15 +13,17 @@ import SParser (SExpr, sExprParser)
 import System.Exit
 import System.IO (hGetContents', stdin)
 
-testInput :: IO [SExpr]
-testInput = do
-  contents <- hGetContents' stdin
-  return $ sExprParser contents
+import ParserSExpr
+import PositionType
+import ParserType (Parser(..))
+import SyntaxParser (parseMany)
 
 main :: IO ExitCode
 main = do
-  expr <- testInput
-  loopOnCommands emptyContext expr
+  contents <- hGetContents' stdin
+  case runParser (parseMany parseSExpr) contents defaultPosition of
+    Left (err, pos) -> putStrLn (show err ++ " found at: " ++ show pos) >> exitWith (ExitFailure 84)
+    Right (sexpr, _, _) -> print sexpr >> loopOnCommands emptyContext sexpr
 
 loopOnCommands :: Context -> [SExpr] -> IO ExitCode
 loopOnCommands _ [] = exitSuccess
