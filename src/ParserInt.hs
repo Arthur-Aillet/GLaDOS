@@ -24,9 +24,15 @@ parseNegInt = (* (-1)) <$> (parseChar '-' *> parseUInt)
 parseInt :: Parser Int
 parseInt = parseNegInt <|> parseUInt
 
-parseFloat :: Parser Float
-parseFloat = (\intPart charPart -> read (intPart ++ charPart))
+parseUFloat :: Parser Float
+parseUFloat = (\intPart charPart -> read (intPart ++ charPart))
             <$> parseStringInt <*> parseFractionalPart
 
 parseFractionalPart :: Parser String
 parseFractionalPart = ('.' :) <$> (parseChar '.' *> parseMany parseDigit)
+
+parseNegFloat :: Parser Float
+parseNegFloat = (* (-1)) <$> (parseChar '-' *> parseUFloat)
+
+parseFloat :: Parser Float
+parseFloat = parseNegFloat <|> parseUFloat

@@ -30,6 +30,7 @@ parserTests =
       "parseUInt" ~: parseUIntTests,
       "parseNegInt" ~: parseNegIntTests,
       "parseInt" ~: parseIntTests,
+      "parseFloat" ~: parseFloatTest,
       "parseWithSpace" ~: parseWithSpaceTests,
       "parseOpeningParenthesis" ~: parseOpeningParenthesisTests,
       "parseClosingParenthesis" ~: parseClosingParenthesisTests,
@@ -178,6 +179,15 @@ parseIntTests =
       "Test 2" ~: (Right (653744, "", (getPosition 6 0))) @=? (runParser parseUInt "653744" defaultPosition),
       "Test 3" ~: (Right (-6, " 5 3 7 4 4", (getPosition 2 0))) @=? (runParser parseNegInt "-6 5 3 7 4 4" defaultPosition),
       "Test 4" ~: (Left ("Char not found in list", (getPosition 0 0))) @=? (runParser parseUInt "foo bar" defaultPosition)
+    ]
+
+parseFloatTest :: Test
+parseFloatTest =
+  TestList
+    [ "Test 1" ~: (Right(123.123, "", getPosition 7 0)) @=? (runParser parseFloat "123.123" defaultPosition),
+      "Test 2" ~: (Right(-123.123, "", getPosition 8 0)) @=? (runParser parseFloat "-123.123" defaultPosition),
+      "Test 3" ~: (Left("Invalid char found", (getPosition 1 0))) @=? (runParser parseFloat "123" defaultPosition),
+      "Test 4" ~: (Left("Char not present in empty list", (getPosition 0 0))) @=? (runParser parseFloat "" defaultPosition)
     ]
 
 parseWithSpaceTests :: Test
