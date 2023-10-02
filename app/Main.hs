@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import AST (Context, emptyContext, evalAST)
+import AST (Context, emptyContext, evalAST, displayAST)
 import System.Environment (getArgs, getProgName)
 import Converter (sexprToAST)
 import System.Timeout (timeout)
@@ -61,7 +61,7 @@ main = do
             getInstructions
             exitSuccess
     else do
-        status <- timeout (10 * 1000 * 1000) scrapers
+        status <- timeout (10 * 1000 * 1000) scraper
         case status of
             Just () -> exitSuccess
             Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
@@ -69,7 +69,7 @@ main = do
 loopOnCommands :: Context -> [SExpr] -> IO ExitCode
 loopOnCommands _ [] = exitSuccess
 loopOnCommands ctx (expr : xs) = case sexprToAST expr of
-  Just ast -> print res >> loopOnCommands newCtx xs
+  Just ast -> displayAST res >> loopOnCommands newCtx xs
     where
       (newCtx, res) = evalAST ctx ast
   Nothing -> exitWith (ExitFailure 84)
