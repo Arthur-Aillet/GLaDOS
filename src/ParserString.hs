@@ -24,3 +24,6 @@ parseString =
   parseOpeningQuote
     *> parseMany (parseNotChar '"')
     <* parseClosingQuote
+
+parseSym :: Parser String
+parseSym = parseSome (parseAnyChar (['!'..'\''] ++ ['*'..'~']))

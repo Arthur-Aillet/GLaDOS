@@ -15,6 +15,7 @@ import SyntaxParser ( parseSome, parseList )
 import ParserInt ( parseInt, parseFloat )
 import ParserBool ( parseBool )
 import ParserChar ( parseAnyChar )
+import ParserString (parseSym)
 
 parseSExpr :: Parser SExpr
 parseSExpr =
@@ -22,4 +23,4 @@ parseSExpr =
     <|> (SInt <$> parseInt)
     <|> (SFloat <$> parseFloat)
     <|> (SBool <$> parseBool)
-    <|> (SSym <$> parseSome (parseAnyChar (['a'..'z'] ++ ['A'..'Z'] ++ ['*'..'/'])))
+    <|> (SSym <$> parseSym)
