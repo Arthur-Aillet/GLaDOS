@@ -2,7 +2,7 @@
 -- EPITECH PROJECT, 2023
 -- Main.hs
 -- File description:
--- GLaDOS scraper Main file
+-- GLaDOS Main file
 -}
 
 module Main (main) where
