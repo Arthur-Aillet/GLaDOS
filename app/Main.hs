@@ -61,7 +61,7 @@ main = do
             getInstructions
             exitSuccess
     else do
-        status <- timeout (10 * 1000 * 1000) scraper
+        status <- timeout (10 * 1000 * 1000) scrapers
         case status of
             Just () -> exitSuccess
             Nothing -> putStrLn "#ERR: timedout" >> exitWith (ExitFailure 84)
