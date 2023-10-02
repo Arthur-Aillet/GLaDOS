@@ -8,6 +8,7 @@
 module AST
   ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
     evalAST,
+    displayAST,
     Context,
     emptyContext,
   )
@@ -33,6 +34,17 @@ type Context = (HashMap String Ast)
 
 emptyContext :: Context
 emptyContext = empty
+
+displayAST :: Ast -> IO ()
+displayAST (Error s) = putStrLn ("evaluation error: " ++ s)
+displayAST (Null) = return ()
+displayAST (Atom i) = print i
+displayAST (Truth True) = putStrLn "#t"
+displayAST (Truth False) = putStrLn "#f"
+displayAST (Lambda _ _) = putStrLn "#<procedure>"
+displayAST (Func name _ _) = putStrLn $ "#<procedure " ++ name ++ ">"
+displayAST (Builtin name _) = putStrLn $ "#<procedure " ++ name ++ ">"
+displayAST (_) = putStrLn "#inevaluable"
 
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
