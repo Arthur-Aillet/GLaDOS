@@ -50,9 +50,6 @@ sexprToAST (SList [SSym "lambda", SList args, expr]) =
         Nothing -> Nothing
       _ -> Nothing
 
-sexprToAST (SList (SSym name:args)) = case convertArgsContinuous args of
-    (Just jArgs) -> Just (Call (Symbol name) jArgs)
-    _ -> Nothing
 sexprToAST (SList (SSym name : args)) = case convertArgsContinuous args of
   (Just jArgs) -> Just (Call (Symbol name) jArgs)
   _ -> Nothing
