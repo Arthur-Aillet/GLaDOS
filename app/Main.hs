@@ -10,7 +10,7 @@ module Main (main) where
 import AST (Context, emptyContext, evalAST)
 import Converter (sexprToAST)
 import System.Exit
-import System.IO (hGetContents', stdin)
+import System.IO (hGetContents', stdin, hSetBuffering, stdout, BufferMode(..))
 
 import ParserSExpr
 import PositionType
