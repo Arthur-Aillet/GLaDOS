@@ -11,15 +11,17 @@ import AST (Context, emptyContext, evalAST)
 import Converter (sexprToAST)
 import SParser (SExpr, sExprParser)
 import System.Exit
-import System.IO (hGetContents', stdin)
+import System.IO (hGetContents', stdin, hSetBuffering, stdout, BufferMode(..))
 
 testInput :: IO [SExpr]
 testInput = do
+  putStr "> "
   contents <- hGetContents' stdin
   return $ sExprParser contents
 
 main :: IO ExitCode
 main = do
+  hSetBuffering stdout NoBuffering
   expr <- testInput
   loopOnCommands emptyContext expr
 
