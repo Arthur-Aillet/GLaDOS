@@ -9,7 +9,6 @@ module Main (main) where
 
 import AST (Context, emptyContext, evalAST)
 import Converter (sexprToAST)
-import SParser (SExpr, sExprParser)
 import System.Exit
 import System.IO (hGetContents', stdin)
 
