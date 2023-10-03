@@ -22,6 +22,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-
       - name: Build and run tests
-        run: "stack test --fast --no-terminal --system-ghc > failed"
-      - name: Test if some tests failed
-        run: "cat failed"
+        run: "! stack test --fast --no-terminal --system-ghc 2>&1 | grep \"Failure in\""
