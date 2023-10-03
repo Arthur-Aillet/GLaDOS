@@ -99,8 +99,8 @@ parseSymbolTests :: Test
 parseSymbolTests =
   TestList
     [ "Test 1" ~: (Right ("azerty", " hello", (getPosition 6 0))) @=? (runParser (parseSymbol "azerty") "azerty hello" defaultPosition),
-      "Test 2" ~: (Left ("Invalid string found", (getPosition 6 0))) @=? (runParser (parseSymbol "ezryta") "azerty hello" defaultPosition),
-      "Test 3" ~: (Left ("String not found", (getPosition 0 0))) @=? (runParser (parseSymbol "azerty") "" defaultPosition)
+      "Test 2" ~: (Left ("Invalid symbol found", (getPosition 0 0))) @=? (runParser (parseSymbol "ezryta") "azerty hello" defaultPosition),
+      "Test 3" ~: (Left ("Symbol not found", (getPosition 0 0))) @=? (runParser (parseSymbol "azerty") "" defaultPosition)
     ]
 
 parseStringTests :: Test
