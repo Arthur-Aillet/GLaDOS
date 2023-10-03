@@ -5,12 +5,14 @@
 -- AST
 -}
 
-module AST
-  ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
+module Ast
+  (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error),
     evalAST,
     displayAST,
     Context,
     emptyContext,
+    isBuiltin,
+    expectAtom
   )
 where
 
@@ -28,7 +30,7 @@ data Ast
   | Call Ast [Ast] -- call to be exectuted or fail immediately
   | Builtin String [Ast] -- builtin (binary?) operator
   | If Ast Ast Ast -- branching condition
-  deriving (Show)
+  deriving (Show, Eq)
 
 type Context = (HashMap String Ast)
 
