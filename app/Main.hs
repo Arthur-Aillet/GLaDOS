@@ -9,12 +9,12 @@ module Main (main) where
 
 import AST (Context, displayAST, emptyContext, evalAST)
 import Converter (sexprToAST)
-import ParserError
-import ParserSExpr
+import ParserError ( printErr )
+import ParserSExpr ( parseSExpr, SExpr )
 import ParserType (Parser (..))
-import PositionType
+import PositionType ( defaultPosition )
 import SyntaxParser (parseManyValidOrEmpty)
-import System.Exit
+import System.Exit ( ExitCode(ExitFailure), exitSuccess, exitWith )
 import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
 import System.Timeout (timeout)
 
