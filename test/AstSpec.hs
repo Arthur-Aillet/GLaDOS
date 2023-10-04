@@ -25,19 +25,25 @@ exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Sy
 emptyContextTest :: Test
 emptyContextTest = TestCase $ assertEqual "return empty" empty emptyContext
 
--- isBuiltinTests :: Test
--- isBuiltinTests = TestList
---   [ "Test < " ~: True @=? (isBuiltin "<")
---     "Test eq? " ~: True @=? (isBuiltin "eq?"),
---     "Test + " ~: True @=? (isBuiltin "+"),
---     "Test - " ~: True @=? (isBuiltin "-"),
---     "Test * " ~: True @=? (isBuiltin "*"),
---     "Test div " ~: True @=? (isBuiltin "div"),
---     "Test mod " ~: True @=? (isBuiltin "mod"),
---     "Test Error " ~: False @=? (isBuiltin "foo")
---   ]
+isBuiltinTests :: Test
+isBuiltinTests = TestList
+  [ "Test < is a builtin" ~: isBuiltin "<" ~?= True
+    , "Test eq? is a builtin" ~: isBuiltin "eq?" ~?= True
+    , "Test + is a builtin" ~: isBuiltin "+" ~?= True
+    , "Test - is a builtin" ~: isBuiltin "-" ~?= True
+    , "Test * is a builtin" ~: isBuiltin "*" ~?= True
+    , "Test div is a builtin" ~: isBuiltin "div" ~?= True
+    , "Test mod is a builtin" ~: isBuiltin "mod" ~?= True
+    , "Test foo is not a builtin" ~: isBuiltin "foo" ~?= False
+    ]
 
--- expectAtomTests :: Test
--- expectAtomTests = TestList
---   [ "Atom" ~: (Atom 9) @=? (expectAtom (exempleContext, Atom 9))
---   ]
+expectAtomTests :: Test
+expectAtomTests = TestList
+  [ "Atom" ~: (Atom 9) @=? (expectAtom (exempleContext, Atom 9))
+  , "Truth" ~: (Truth True) @=? (expectAtom (exempleContext, Truth True))
+  , "String" ~: (Error ("Symbol 'b' is not bound")) @=? (expectAtom (exempleContext, Symbol "b"))
+  , "Error" ~: (Error "Tu es mauvais Jack") @=? (expectAtom (exempleContext, Error "Tu es mauvais Jack"))
+  , "Other" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
+  ]
+
+
