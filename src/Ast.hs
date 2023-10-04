@@ -6,7 +6,7 @@
 -}
 
 module Ast
-  (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
+  ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
     execCallDistribute,
@@ -20,7 +20,7 @@ module Ast
     builtinEq,
     builtinLt,
     builtinDiv,
-    builtinMod
+    builtinMod,
   )
 where
 
