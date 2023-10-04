@@ -16,9 +16,17 @@ parserASTTests :: Test
 parserASTTests =
   TestList
     [ "emptyContext" ~: emptyContextTest,
+      -- "execCallDistribute" ~: execCallDistributeTests,
+      -- "execCall" ~: execCallTests,
+      -- "execBuiltins" ~: execBuiltinsTests,
       "isBuiltin" ~: isBuiltinTests,
       "expectAtom" ~: expectAtomTests,
-      "evalAST" ~: evalASTTest
+      "evalAST" ~: evalASTTests,
+      -- "binOp" ~: binOpTests,
+      -- "builtinEq" ~: builtinEqTests,
+      -- "builtinLt" ~: builtinLtTests,
+      -- "builtinDiv" ~: builtinDivTests,
+      -- "builtinMod" ~: builtinModTests,
     ]
 
 exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
@@ -26,6 +34,21 @@ newContext = fromList [("Symbole",Symbol "define"),("var",Atom 42),("String",Sym
 
 emptyContextTest :: Test
 emptyContextTest = TestCase $ assertEqual "return empty" empty emptyContext
+
+-- execCallDistributeTests :: Test
+-- execCallDistributeTests = TestList
+--   [
+--   ]
+
+-- execCallTests :: Test
+-- execCallTests = TestList
+--   [
+--   ]
+
+-- execBuiltinsTests :: Test
+-- execBuiltinsTests = TestList
+--   [
+--   ]
 
 isBuiltinTests :: Test
 isBuiltinTests = TestList
@@ -39,17 +62,9 @@ isBuiltinTests = TestList
     , "Test foo is not a builtin" ~: isBuiltin "foo" ~?= False
     ]
 
-expectAtomTests :: Test
-expectAtomTests = TestList
-  [ "Atom" ~: (Atom 9) @=? (expectAtom (exempleContext, Atom 9))
-  , "Truth" ~: (Truth True) @=? (expectAtom (exempleContext, Truth True))
-  , "String" ~: (Error ("Symbol 'b' is not bound")) @=? (expectAtom (exempleContext, Symbol "b"))
-  , "Error" ~: (Error "Tu es mauvais Jack") @=? (expectAtom (exempleContext, Error "Tu es mauvais Jack"))
-  , "Otherwise" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
-  ]
 
-evalASTTest :: Test
-evalASTTest = TestList
+evalASTTests :: Test
+evalASTTests = TestList
   [ "Error" ~: (exempleContext, Error "Tu es mauvais Jack") @=? (evalAST exempleContext (Error "Tu es mauvais Jack"))
   , "Ast is Null" ~: (exempleContext, Error "expression has no value") @=? (evalAST exempleContext Null)
   , "Find a value in context" ~: (exempleContext, Atom 9) @=? (evalAST exempleContext (Symbol "Atom"))
@@ -66,4 +81,36 @@ evalASTTest = TestList
   --, "Otherwise" ~:
   ]
 
+expectAtomTests :: Test
+expectAtomTests = TestList
+  [ "Atom" ~: (Atom 9) @=? (expectAtom (exempleContext, Atom 9))
+  , "Truth" ~: (Truth True) @=? (expectAtom (exempleContext, Truth True))
+  , "String" ~: (Error ("Symbol 'b' is not bound")) @=? (expectAtom (exempleContext, Symbol "b"))
+  , "Error" ~: (Error "Tu es mauvais Jack") @=? (expectAtom (exempleContext, Error "Tu es mauvais Jack"))
+  , "Otherwise" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
+  ]
 
+-- binOpTests :: Test
+-- binOpTests = TestList
+--   [
+--   ]
+
+-- builtinEqTests :: Test
+-- builtinEqTests = TestList
+--   [
+--   ]
+
+-- builtinLtTests :: Test
+-- builtinLtTests = TestList
+--   [
+--   ]
+
+-- builtinDivTests :: Test
+-- builtinDivTests = TestList
+--   [
+--   ]
+
+-- builtinModTests :: Test
+-- builtinModTests = TestList
+--   [
+--   ]
