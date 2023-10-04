@@ -39,13 +39,21 @@ parserASTTests =
       "builtinMod" ~: builtinModTests
     ]
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+exempleContext :: Context
 exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
 
+newContext :: Context
 newContext = fromList [("Symbole", Symbol "define"), ("var", Atom 42), ("String", Symbol "var"), ("Atom", Atom 9)]
 
+callDistributeResultContext :: Context
 callDistributeResultContext = fromList [("Symbole", Symbol "define"), ("b", Atom 11), ("String", Symbol "var"), ("a", Atom 10), ("Atom", Atom 9)]
 
+addContext :: Context
 addContext = fromList [("add", Lambda ["a", "b"] (Builtin "+" [Symbol "a", Symbol "b"])), ("Symbole", Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 emptyContextTest :: Test
 emptyContextTest = TestCase $ assertEqual "return empty" empty emptyContext
@@ -62,10 +70,10 @@ execCallTests :: Test
 execCallTests =
   TestList
     [ "Call to Lambda with Correct Arguments" ~: execCall emptyContext (Lambda ["x", "y"] (Builtin "+" [Symbol "x", Symbol "y"])) [Atom 42, Atom 10] ~?= (emptyContext, Atom 52),
-      "Call to Lambda with Incorrect Arguments" ~: execCall emptyContext (Lambda ["x", "y"] (Builtin "+" [Symbol "x", Symbol "y"])) [Atom 42] ~?= (emptyContext, Error "incorrect args to lambda"),
+      "Call to Lambda with Incorrect Arguments" ~: execCall emptyContext (Lambda ["x", "y"] (Builtin "+" [Symbol "x", Symbol "y"])) [Atom 42] ~?= (emptyContext, Error "Incorrect args to lambda"),
       "Call to Builtin Addition" ~: execCall emptyContext (Symbol "+") [Atom 5, Atom 7] ~?= (emptyContext, Atom 12),
       "Call to Non-Procedure Symbol" ~: execCall emptyContext (Symbol "foo") [] ~?= (emptyContext, Error "Symbol 'foo' is not bound"),
-      "Ast is Null" ~: execCall emptyContext Null [Atom 42] ~?= (emptyContext, Error "expression has no value")
+      "Ast is Null" ~: execCall emptyContext Null [Atom 42] ~?= (emptyContext, Error "Expression has no value")
     ]
 
 execBuiltinsTests :: Test
@@ -80,7 +88,7 @@ execBuiltinsTests =
       "builtin *" ~: execBuiltins exempleContext "*" [Atom 15, Atom 10] ~?= Atom 150,
       "builtin div" ~: execBuiltins exempleContext "div" [Atom 15, Atom 10] ~?= Atom 1,
       "builtin mod" ~: execBuiltins exempleContext "mod" [Atom 15, Atom 10] ~?= Atom 5,
-      "builtin unimplemented" ~: execBuiltins exempleContext "unimplemented" [Atom 15, Atom 10] ~?= Error "unimplemented builtin: unimplemented"
+      "builtin unimplemented" ~: execBuiltins exempleContext "unimplemented" [Atom 15, Atom 10] ~?= Error "Symbol 'unimplemented' is not bound"
     ]
 
 isBuiltinTests :: Test
@@ -100,7 +108,7 @@ evalASTTests :: Test
 evalASTTests =
   TestList
     [ "Error" ~: (exempleContext, Error "Tu es mauvais Jack") @=? (evalAST exempleContext (Error "Tu es mauvais Jack")),
-      "Ast is Null" ~: (exempleContext, Error "expression has no value") @=? (evalAST exempleContext Null),
+      "Ast is Null" ~: (exempleContext, Error "Expression has no value") @=? (evalAST exempleContext Null),
       "Find a value in context" ~: (exempleContext, Atom 9) @=? (evalAST exempleContext (Symbol "Atom")),
       "Find operator" ~: (exempleContext, Symbol "+") @=? (evalAST exempleContext (Symbol "+")),
       "Not find value in context" ~: (exempleContext, Error "Symbol 'b' is not bound") @=? (evalAST exempleContext (Symbol "b")),
@@ -108,8 +116,8 @@ evalASTTests =
       "Atom" ~: (exempleContext, Atom 42) @=? (evalAST exempleContext (Atom 42)),
       "Truth" ~: (exempleContext, Truth True) @=? (evalAST exempleContext (Truth True)),
       "Call" ~: (addContext, Atom 10) @=? evalAST addContext (Call (Symbol "add") [Atom 4, Atom 6]),
-      "builtin" ~: (exempleContext, Error "unimplemented builtin: foo") @=? evalAST exempleContext (Builtin "foo" []),
-      "If Error" ~: (exempleContext, Error "expression has no value") @=? evalAST exempleContext (If Null (Truth True) (Truth False)),
+      "builtin" ~: (exempleContext, Error "Symbol 'foo' is not bound") @=? evalAST exempleContext (Builtin "foo" []),
+      "If Error" ~: (exempleContext, Error "Expression has no value") @=? evalAST exempleContext (If Null (Truth True) (Truth False)),
       "If False" ~: (exempleContext, Truth False) @=? evalAST exempleContext (If (Builtin "eq?" [Atom 10, Atom 5]) (Truth True) (Truth False)),
       "If True" ~: (exempleContext, Truth True) @=? evalAST exempleContext (If (Builtin "eq?" [Atom 10, Atom 10]) (Truth True) (Truth False))
     ]
@@ -121,7 +129,7 @@ expectAtomTests =
       "Truth" ~: (Truth True) @=? (expectAtom (exempleContext, Truth True)),
       "String" ~: (Error ("Symbol 'b' is not bound")) @=? (expectAtom (exempleContext, Symbol "b")),
       "Error" ~: (Error "Tu es mauvais Jack") @=? (expectAtom (exempleContext, Error "Tu es mauvais Jack")),
-      "Otherwise" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
+      "Otherwise" ~: (Error ("Expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
     ]
 
 binOpTests :: Test
@@ -159,7 +167,7 @@ builtinDivTests :: Test
 builtinDivTests =
   TestList
     [ "Division" ~: builtinDiv exempleContext [Atom 6, Atom 3] ~?= Atom 2,
-      "Division by Zero" ~: builtinDiv exempleContext [Atom 6, Atom 0] ~?= Error "division by zero",
+      "Division by Zero" ~: builtinDiv exempleContext [Atom 6, Atom 0] ~?= Error "Division by zero is denied",
       "Error first argument" ~: builtinDiv exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound",
       "Error second argument" ~: builtinDiv exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
       "Error third argument" ~: builtinDiv exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to div"
@@ -169,7 +177,7 @@ builtinModTests :: Test
 builtinModTests =
   TestList
     [ "Modulo" ~: builtinMod exempleContext [Atom 7, Atom 3] ~?= Atom 1,
-      "Modulo by Zero" ~: builtinMod exempleContext [Atom 7, Atom 0] ~?= Error "modulo by zero",
+      "Modulo by Zero" ~: builtinMod exempleContext [Atom 7, Atom 0] ~?= Error "Modulo by zero is denied",
       "Error first argument" ~: builtinMod exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound",
       "Error second argument" ~: builtinMod exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
       "Error third argument" ~: builtinMod exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to mod"
