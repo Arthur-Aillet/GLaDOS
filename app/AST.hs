@@ -36,7 +36,7 @@ emptyContext :: Context
 emptyContext = empty
 
 displayAST :: Ast -> IO ()
-displayAST (Error s) = putStrLn ("evaluation error: " ++ s)
+displayAST (Error s) = putStrLn ("Error: " ++ s)
 displayAST (Null) = return ()
 displayAST (Atom i) = print i
 displayAST (Truth True) = putStrLn "#t"
@@ -60,11 +60,11 @@ execCall ctx call args =
     case evalAST ctx call of
       (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
         Just jLocalCtx -> snd (evalAST jLocalCtx expr)
-        Nothing -> Error "incorrect args to lambda"
+        Nothing -> Error "Incorrect args to lambda"
       (_, Symbol sym) ->
         if isBuiltin sym
           then execBuiltins ctx sym args
-          else Error ("call to non-procedure symbol: " ++ sym)
+          else Error ("Symbol '" ++ sym ++ "' is not bound")
       (_, Error x) -> Error x
       _ -> Error "call to non-procedure"
   )
@@ -77,7 +77,7 @@ execBuiltins ctx "-" xs = binOp (-) ctx xs
 execBuiltins ctx "*" xs = binOp (*) ctx xs
 execBuiltins ctx "div" xs = builtinDiv ctx xs
 execBuiltins ctx "mod" xs = builtinMod ctx xs
-execBuiltins _ call _ = Error ("unimplemented builtin: " ++ call)
+execBuiltins _ call _ = Error ("Symbol '" ++ call ++ "' is not bound")
 
 isBuiltin :: String -> Bool
 isBuiltin "<" = True
@@ -91,7 +91,7 @@ isBuiltin _ = False
 
 evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
-evalAST ctx Null = (ctx, Error "expression has no value")
+evalAST ctx Null = (ctx, Error "Expression has no value")
 evalAST ctx (Symbol sym) = case ctx !? sym of
   Just jast -> (ctx, jast)
   Nothing ->
@@ -117,7 +117,7 @@ expectAtom (_, Atom i) = Atom i
 expectAtom (_, Truth t) = Truth t
 expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
 expectAtom (_, Error string) = Error string
-expectAtom (_, x) = Error ("expected Atom but got: " ++ show x)
+expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
 
 binOp :: (Int -> Int -> Int) -> Context -> [Ast] -> Ast
 binOp op ctx [a, b] =
@@ -149,7 +149,7 @@ builtinDiv ctx [a, b] = case expectAtom (evalAST ctx a) of
   Atom ia -> case expectAtom (evalAST ctx b) of
     Atom ib ->
       if ib == 0
-        then Error "division by zero"
+        then Error "Division by zero is denied"
         else Atom (ia `div` ib)
     x -> x
   x -> x
@@ -160,7 +160,7 @@ builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
   Atom ia -> case expectAtom (evalAST ctx b) of
     Atom ib ->
       if ib == 0
-        then Error "modulo by zero"
+        then Error "Modulo by zero is denied"
         else Atom (ia `mod` ib)
     x -> x
   x -> x

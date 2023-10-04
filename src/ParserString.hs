@@ -16,8 +16,8 @@ parseSymbol string = Parser $ \s p ->
   case runParser (parseSome (parseAnyChar (['a' .. 'z'] ++ ['A' .. 'Z']))) s p of
     Right (found, n_s, n_p)
       | found == string -> Right (found, n_s, n_p)
-      | otherwise -> Left ("Invalid symbol found", p)
-    Left (_, new_pos) -> Left ("Symbol not found", new_pos)
+      | otherwise -> Left ("Error: Symbols are not the same", p)
+    Left (_, new_pos) -> Left ("Not Found: List is empty", new_pos)
 
 parseString :: Parser String
 parseString =
