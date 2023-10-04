@@ -5,10 +5,18 @@ import Test.HUnit
 import Ast (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
+    execCallDistribute,
+    execCall,
+    execBuiltins,
     Context,
     emptyContext,
     isBuiltin,
-    expectAtom
+    expectAtom,
+    binOp,
+    builtinEq,
+    builtinLt,
+    builtinDiv,
+    builtinMod
   )
 
 
@@ -22,11 +30,11 @@ parserASTTests =
       "isBuiltin" ~: isBuiltinTests,
       "expectAtom" ~: expectAtomTests,
       "evalAST" ~: evalASTTests,
-      -- "binOp" ~: binOpTests,
-      -- "builtinEq" ~: builtinEqTests,
-      -- "builtinLt" ~: builtinLtTests,
-      -- "builtinDiv" ~: builtinDivTests,
-      -- "builtinMod" ~: builtinModTests,
+      "binOp" ~: binOpTests,
+      "builtinEq" ~: builtinEqTests,
+      "builtinLt" ~: builtinLtTests,
+      "builtinDiv" ~: builtinDivTests,
+      "builtinMod" ~: builtinModTests
     ]
 
 exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
@@ -90,27 +98,48 @@ expectAtomTests = TestList
   , "Otherwise" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
   ]
 
--- binOpTests :: Test
--- binOpTests = TestList
---   [
---   ]
+binOpTests :: Test
+binOpTests = TestList
+  [ "Addition" ~: binOp (+) exempleContext [Atom 2, Atom 3] ~?= Atom 5
+  , "Subtraction" ~: binOp (-) exempleContext [Atom 5, Atom 3] ~?= Atom 2
+  , "Multiplication" ~: binOp (*) exempleContext [Atom 2, Atom 3] ~?= Atom 6
+  , "Error first argument" ~: binOp (+) exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound"
+  , "Error second argument" ~: binOp (+) exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
+  , "Error third argument" ~: binOp (+) exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to binary operand"
+  ]
 
--- builtinEqTests :: Test
--- builtinEqTests = TestList
---   [
---   ]
+builtinEqTests :: Test
+builtinEqTests = TestList
+  [ "Equality True" ~: builtinEq exempleContext [Atom 3, Atom 3] ~?= Truth True
+  , "Equality False" ~: builtinEq exempleContext [Atom 3, Atom 5] ~?= Truth False
+  , "Error first argument" ~: builtinEq exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound"
+  , "Error second argument" ~: builtinEq exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
+  , "Error third argument" ~: builtinEq exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to eq?"
+  ]
 
--- builtinLtTests :: Test
--- builtinLtTests = TestList
---   [
---   ]
+builtinLtTests :: Test
+builtinLtTests = TestList
+  [ "Less Than True" ~: builtinLt exempleContext [Atom 2, Atom 3] ~?= Truth True
+  , "Less Than False" ~: builtinLt exempleContext [Atom 3, Atom 2] ~?= Truth False
+  , "Error first argument" ~: builtinLt exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound"
+  , "Error second argument" ~: builtinLt exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
+  , "Error third argument" ~: builtinLt exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to <"
+  ]
 
--- builtinDivTests :: Test
--- builtinDivTests = TestList
---   [
---   ]
+builtinDivTests :: Test
+builtinDivTests = TestList
+  [ "Division" ~: builtinDiv exempleContext [Atom 6, Atom 3] ~?= Atom 2
+  , "Division by Zero" ~: builtinDiv exempleContext [Atom 6, Atom 0] ~?= Error "division by zero"
+  , "Error first argument" ~: builtinDiv exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound"
+  , "Error second argument" ~: builtinDiv exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
+  , "Error third argument" ~: builtinDiv exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to div"
+  ]
 
--- builtinModTests :: Test
--- builtinModTests = TestList
---   [
---   ]
+builtinModTests :: Test
+builtinModTests = TestList
+  [ "Modulo" ~: builtinMod exempleContext [Atom 7, Atom 3] ~?= Atom 1
+  , "Modulo by Zero" ~: builtinMod exempleContext [Atom 7, Atom 0] ~?= Error "modulo by zero"
+  , "Error first argument" ~: builtinMod exempleContext [Symbol "foo", Atom 3] ~?= Error "Symbol 'foo' is not bound"
+  , "Error second argument" ~: builtinMod exempleContext [Atom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
+  , "Error third argument" ~: builtinMod exempleContext [Atom 2, Atom 3, Atom 4] ~?= Error "Bad number of args to mod"
+  ]

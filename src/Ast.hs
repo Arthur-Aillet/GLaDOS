@@ -9,10 +9,18 @@ module Ast
   (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
+    execCallDistribute,
+    execCall,
+    execBuiltins,
     Context,
     emptyContext,
     isBuiltin,
-    expectAtom
+    expectAtom,
+    binOp,
+    builtinEq,
+    builtinLt,
+    builtinDiv,
+    builtinMod
   )
 where
 
