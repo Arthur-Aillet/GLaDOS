@@ -18,15 +18,17 @@ import Ast (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, E
     builtinDiv,
     builtinMod
   )
+import Data.Bool (Bool(True))
+import GHC.Plugins (lambda)
 
 
 parserASTTests :: Test
 parserASTTests =
   TestList
     [ "emptyContext" ~: emptyContextTest,
-      -- "execCallDistribute" ~: execCallDistributeTests,
+      "execCallDistribute" ~: execCallDistributeTests,
       -- "execCall" ~: execCallTests,
-      -- "execBuiltins" ~: execBuiltinsTests,
+      "execBuiltins" ~: execBuiltinsTests,
       "isBuiltin" ~: isBuiltinTests,
       "expectAtom" ~: expectAtomTests,
       "evalAST" ~: evalASTTests,
@@ -39,24 +41,45 @@ parserASTTests =
 
 exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
 newContext = fromList [("Symbole",Symbol "define"),("var",Atom 42),("String",Symbol "var"),("Atom",Atom 9)]
+callDistributeResultContext = fromList [("Symbole",Symbol "define"),("b",Atom 11),("String",Symbol "var"),("a",Atom 10),("Atom",Atom 9)]
+addContext = fromList [("add" ,Lambda ["a","b"] (Builtin "+" [Symbol "a",Symbol "b"])),("Symbole",Symbol "define"),("String",Symbol "var"),("Atom",Atom 9)]
 
 emptyContextTest :: Test
 emptyContextTest = TestCase $ assertEqual "return empty" empty emptyContext
 
--- execCallDistributeTests :: Test
--- execCallDistributeTests = TestList
---   [
---   ]
+execCallDistributeTests :: Test
+execCallDistributeTests = TestList
+  [ "end of list" ~: execCallDistribute exempleContext [] [] ~?= Just exempleContext
+  , "regular" ~: execCallDistribute exempleContext ["a", "b"] [Atom 10, Atom 11] ~?= Just callDistributeResultContext
+  , "nothing" ~: execCallDistribute exempleContext [] [Atom 10] ~?= Nothing
+  ]
+
+-- execCallDistribute ctx [] [] = Just ctx
+-- execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
+--   Just next -> case evalAST ctx x of
+--     (_, y) -> Just $ insert s y next
+--   Nothing -> Nothing
+-- execCallDistribute _ _ _ = Nothing
+
 
 -- execCallTests :: Test
 -- execCallTests = TestList
 --   [
 --   ]
 
--- execBuiltinsTests :: Test
--- execBuiltinsTests = TestList
---   [
---   ]
+execBuiltinsTests :: Test
+execBuiltinsTests = TestList
+  [ "builtin < false" ~: execBuiltins exempleContext "<" [ Atom 15, Atom 10] ~?= Truth False
+  , "builtin < true" ~: execBuiltins exempleContext "<" [ Atom 10, Atom 15] ~?= Truth True
+  , "builtin eq false" ~: execBuiltins exempleContext "eq?" [ Atom 15, Atom 10] ~?= Truth False
+  , "builtin eq true" ~: execBuiltins exempleContext "eq?" [ Atom 15, Atom 15] ~?= Truth True
+  , "builtin +" ~: execBuiltins exempleContext "+" [ Atom 15, Atom 10] ~?= Atom 25
+  , "builtin -" ~: execBuiltins exempleContext "-" [ Atom 15, Atom 10] ~?= Atom 5
+  , "builtin *" ~: execBuiltins exempleContext "*" [ Atom 15, Atom 10] ~?= Atom 150
+  , "builtin div" ~: execBuiltins exempleContext "div" [ Atom 15, Atom 10] ~?= Atom 1
+  , "builtin mod" ~: execBuiltins exempleContext "mod" [ Atom 15, Atom 10] ~?= Atom 5
+  , "builtin unimplemented" ~: execBuiltins exempleContext "unimplemented" [ Atom 15, Atom 10] ~?= Error "unimplemented builtin: unimplemented"
+  ]
 
 isBuiltinTests :: Test
 isBuiltinTests = TestList
@@ -81,12 +104,11 @@ evalASTTests = TestList
   , "Define" ~: (newContext, Null) @=? (evalAST exempleContext (Define "var" (Atom 42)))
   , "Atom" ~: (exempleContext, Atom 42) @=? (evalAST exempleContext (Atom 42))
   , "Truth" ~: (exempleContext, Truth True) @=? (evalAST exempleContext (Truth True))
-  -- , "Call" ~:
-  -- , "Builtin" ~:
-  --, "If Error" ~:
-  --, "If False" ~:
-  --, "If True" ~:
-  --, "Otherwise" ~:
+  , "Call" ~: (addContext , Atom 10) @=? evalAST addContext (Call (Symbol "add") [Atom 4, Atom 6])
+  , "builtin" ~: (exempleContext, Error "unimplemented builtin: foo")  @=? evalAST exempleContext (Builtin "foo" [])
+  , "If Error" ~: (exempleContext, Error "expression has no value") @=? evalAST exempleContext (If Null (Truth True) (Truth False))
+  , "If False" ~: (exempleContext, Truth False) @=? evalAST exempleContext (If (Builtin "eq?" [Atom 10, Atom 5]) (Truth True) (Truth False))
+  , "If True" ~: (exempleContext, Truth True) @=? evalAST exempleContext (If (Builtin "eq?" [Atom 10, Atom 10]) (Truth True) (Truth False))
   ]
 
 expectAtomTests :: Test
