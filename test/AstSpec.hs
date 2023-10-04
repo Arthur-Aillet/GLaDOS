@@ -2,7 +2,7 @@ module AstSpec (parserASTTests) where
 
 import Data.HashMap.Lazy
 import Test.HUnit
-import Ast (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error),
+import Ast (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
     Context,
@@ -17,10 +17,12 @@ parserASTTests =
   TestList
     [ "emptyContext" ~: emptyContextTest,
       "isBuiltin" ~: isBuiltinTests,
-      "expectAtom" ~: expectAtomTests
+      "expectAtom" ~: expectAtomTests,
+      "evalAST" ~: evalASTTest
     ]
 
 exempleContext = fromList [("Symbole" :: String, Symbol "define"), ("String", Symbol "var"), ("Atom", Atom 9)]
+newContext = fromList [("Symbole",Symbol "define"),("var",Atom 42),("String",Symbol "var"),("Atom",Atom 9)]
 
 emptyContextTest :: Test
 emptyContextTest = TestCase $ assertEqual "return empty" empty emptyContext
@@ -43,7 +45,25 @@ expectAtomTests = TestList
   , "Truth" ~: (Truth True) @=? (expectAtom (exempleContext, Truth True))
   , "String" ~: (Error ("Symbol 'b' is not bound")) @=? (expectAtom (exempleContext, Symbol "b"))
   , "Error" ~: (Error "Tu es mauvais Jack") @=? (expectAtom (exempleContext, Error "Tu es mauvais Jack"))
-  , "Other" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
+  , "Otherwise" ~: (Error ("expected Atom but got: Define \"var\" (Atom 2)")) @=? (expectAtom (exempleContext, Define "var" (Atom 2)))
+  ]
+
+evalASTTest :: Test
+evalASTTest = TestList
+  [ "Error" ~: (exempleContext, Error "Tu es mauvais Jack") @=? (evalAST exempleContext (Error "Tu es mauvais Jack"))
+  , "Ast is Null" ~: (exempleContext, Error "expression has no value") @=? (evalAST exempleContext Null)
+  , "Find a value in context" ~: (exempleContext, Atom 9) @=? (evalAST exempleContext (Symbol "Atom"))
+  , "Find operator" ~: (exempleContext, Symbol "+") @=? (evalAST exempleContext (Symbol "+"))
+  , "Not find value in context" ~: (exempleContext, Error "Symbol 'b' is not bound") @=? (evalAST exempleContext (Symbol "b"))
+  , "Define" ~: (newContext, Null) @=? (evalAST exempleContext (Define "var" (Atom 42)))
+  , "Atom" ~: (exempleContext, Atom 42) @=? (evalAST exempleContext (Atom 42))
+  , "Truth" ~: (exempleContext, Truth True) @=? (evalAST exempleContext (Truth True))
+  -- , "Call" ~:
+  -- , "Builtin" ~:
+  --, "If Error" ~:
+  --, "If False" ~:
+  --, "If True" ~:
+  --, "Otherwise" ~:
   ]
 
 

@@ -6,7 +6,7 @@
 -}
 
 module Ast
-  (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error),
+  (Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
     Context,
