@@ -27,7 +27,7 @@ parserASTTests =
   TestList
     [ "emptyContext" ~: emptyContextTest,
       "execCallDistribute" ~: execCallDistributeTests,
-      -- "execCall" ~: execCallTests,
+      "execCall" ~: execCallTests,
       "execBuiltins" ~: execBuiltinsTests,
       "isBuiltin" ~: isBuiltinTests,
       "expectAtom" ~: expectAtomTests,
@@ -54,18 +54,14 @@ execCallDistributeTests = TestList
   , "nothing" ~: execCallDistribute exempleContext [] [Atom 10] ~?= Nothing
   ]
 
--- execCallDistribute ctx [] [] = Just ctx
--- execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
---   Just next -> case evalAST ctx x of
---     (_, y) -> Just $ insert s y next
---   Nothing -> Nothing
--- execCallDistribute _ _ _ = Nothing
-
-
--- execCallTests :: Test
--- execCallTests = TestList
---   [
---   ]
+execCallTests :: Test
+execCallTests = TestList
+   [  "Call to Lambda with Correct Arguments" ~: execCall emptyContext (Lambda ["x", "y"] (Builtin "+" [Symbol "x", Symbol "y"])) [Atom 42, Atom 10] ~?= (emptyContext, Atom 52)
+    , "Call to Lambda with Incorrect Arguments" ~: execCall emptyContext (Lambda ["x", "y"] (Builtin "+" [Symbol "x", Symbol "y"])) [Atom 42] ~?= (emptyContext, Error "incorrect args to lambda")
+    , "Call to Builtin Addition" ~: execCall emptyContext (Symbol "+") [Atom 5, Atom 7] ~?= (emptyContext, Atom 12)
+    , "Call to Non-Procedure Symbol" ~: execCall emptyContext (Symbol "foo") [] ~?= (emptyContext, Error "Symbol 'foo' is not bound")
+    , "Ast is Null" ~: execCall emptyContext Null [Atom 42] ~?= (emptyContext, Error "expression has no value")
+   ]
 
 execBuiltinsTests :: Test
 execBuiltinsTests = TestList
