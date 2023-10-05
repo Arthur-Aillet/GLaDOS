@@ -24,11 +24,8 @@ jobs:
       - name: Build and run unit tests
         run: "! stack test --fast --no-terminal --system-ghc 2>&1 | grep \"Failure in\""
       - name: Install scheme
-        run: |
-          wget "https://github.com/cisco/ChezScheme/releases/download/v9.6.2/csv9.6.2.tar.gz"
-          tar -xvzf csv9.6.2.tar.gz
-          cd ./csv9.6.2
-          ./configure
-          make install
+        uses: guenchi/setup-scheme@master
+        with:
+          implementation: chez
       - name: Build and run functional tests
         run: "make; ./test/functional-tests.sh"
