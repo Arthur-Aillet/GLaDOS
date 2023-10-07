@@ -30,10 +30,10 @@ data Ast
   | If Ast Ast Ast -- branching condition
   deriving (Show)
 
-type Context = (HashMap String Ast)
+type Context = (HashMap String Ast, Int)
 
 emptyContext :: Context
-emptyContext = empty
+emptyContext = (empty, 0)
 
 displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("evaluation error: " ++ s)
@@ -48,9 +48,9 @@ displayAST (_) = putStrLn "#inevaluable"
 
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
-execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
-  Just next -> case evalAST ctx x of
-    (_, y) -> Just $ insert s y next
+execCallDistribute (ctx, depth) (s : ss) (x : xs) = case execCallDistribute (ctx, depth) ss xs of
+  Just (next, depth2) -> case evalAST (ctx, depth) x of
+    (_, y) -> Just (insert s y next, depth + 1)
   Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
@@ -92,15 +92,16 @@ isBuiltin _ = False
 evalAST :: Context -> Ast -> (Context, Ast)
 evalAST ctx (Error msg) = (ctx, Error msg)
 evalAST ctx Null = (ctx, Error "expression has no value")
-evalAST ctx (Symbol sym) = case ctx !? sym of
+evalAST ctx (Symbol sym) = case fst ctx !? sym of
   Just jast -> (ctx, jast)
   Nothing ->
     if isBuiltin sym
       then (ctx, Symbol sym)
       else (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
-evalAST ctx (Define name x) = (insert name val ctx2, Null)
+evalAST (ctx, 0) (Define name x) = ((insert name val ctx2, 1), Null)
   where
-    (ctx2, val) = evalAST ctx x
+    ((ctx2, _), val) = evalAST (ctx, 1) x
+evalAST (ctx, depth) (Define name _) = ((ctx, depth), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
 evalAST ctx (Atom i) = (ctx, Atom i)
 evalAST ctx (Truth t) = (ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
