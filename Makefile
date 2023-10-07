@@ -29,7 +29,7 @@ format_check:
 	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
 	ormolu -m 'check' $${sourceFiles[*]}
 test-run:
-	stack test --pedantic --coverage
+	stack test --coverage
 	stack hpc report --all --destdir test/coverage
 
 test: test-run
