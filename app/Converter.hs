@@ -7,8 +7,8 @@
 
 module Converter (sexprToAST) where
 
-import AST (Ast (Atom, Call, Define, If, Lambda, Symbol, Func))
-import ParserSExpr (SExpr (SInt, SList, SSym))
+import AST (Ast (Atom, Atomf, Truth, Call, Define, If, Lambda, Symbol, Func))
+import ParserSExpr (SExpr (SInt, SList, SSym, SFloat, SBool))
 
 convertArgsContinuous :: [SExpr] -> Maybe [Ast]
 convertArgsContinuous (x : xs) = case convertArgsContinuous xs of
@@ -54,6 +54,8 @@ sexprToAST (SList (SSym name : args)) = case convertArgsContinuous args of
   (Just jArgs) -> Just (Call (Symbol name) jArgs)
   _ -> Nothing
 sexprToAST (SInt x) = Just $ Atom x
+sexprToAST (SBool x) = Just $ Truth x
+sexprToAST (SFloat x) = Just $ Atomf x
 sexprToAST (SSym x) = Just $ Symbol x
 sexprToAST (SList _) = Nothing
 sexprToAST _ = Nothing
