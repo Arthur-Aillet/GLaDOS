@@ -6,7 +6,7 @@
 -}
 
 module AST
-  ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
+  ( Ast (Symbol, Define, Atom, Atomf, Truth, Lambda, Func, Call, Builtin, If),
     evalAST,
     displayAST,
     Context,
@@ -22,6 +22,7 @@ data Ast
   | Symbol String -- Variable that must be bound
   | Define String Ast -- bind an expression to a variable
   | Atom Int -- Single known value
+  | Atomf Float -- Single float known value
   | Truth Bool -- Single known boolean value
   | Lambda [String] Ast -- expression with local bindings
   | Func String [String] Ast -- named expression with local bindings ?? TODO: verify that this shouldn't just be a Define-Lambda pair
@@ -39,6 +40,7 @@ displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("evaluation error: " ++ s)
 displayAST (Null) = return ()
 displayAST (Atom i) = print i
+displayAST (Atomf i) = print i
 displayAST (Truth True) = putStrLn "#t"
 displayAST (Truth False) = putStrLn "#f"
 displayAST (Lambda _ _) = putStrLn "#<procedure>"
@@ -105,6 +107,7 @@ evalAST ctx (Define name x) = (insert name val ctx2, Null)
   where
     (ctx2, val) = evalAST ctx x
 evalAST ctx (Atom i) = (ctx, Atom i)
+evalAST ctx (Atomf i) = (ctx, Atomf i)
 evalAST ctx (Truth t) = (ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
 evalAST ctx (Call expr args) = execCall ctx expr args
@@ -117,6 +120,7 @@ evalAST ctx x = (ctx, x)
 
 expectAtom :: (Context, Ast) -> Ast
 expectAtom (_, Atom i) = Atom i
+expectAtom (_, Atomf i) = Atomf i
 expectAtom (_, Truth t) = Truth t
 expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
 expectAtom (_, Error string) = Error string
@@ -127,44 +131,47 @@ binOp op ctx [a, b] =
   case expectAtom (evalAST ctx a) of
     Atom ia -> case expectAtom (evalAST ctx b) of
       Atom ib -> Atom (op ia ib)
+      Atom ib -> Atom (op ia ib)
       x -> x
     x -> x
 binOp _ _ _ = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib -> Truth (ia == ib)
-    x -> x
-  x -> x
+builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (Atom ia, Atom ib) -> Truth (ia == ib)
+  (Atomf ia, Atomf ib) -> Truth (ia == ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinEq _ _ = Error "Bad number of args to eq?"
 
 builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib -> Truth (ia < ib)
-    x -> x
-  x -> x
+builtinLt ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (Atom ia, Atom ib) -> Truth (ia < ib)
+  (Atomf ia, Atomf ib) -> Truth (ia < ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinLt _ _ = Error "Bad number of args to <"
 
 builtinDiv :: Context -> [Ast] -> Ast
-builtinDiv ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib ->
-      if ib == 0
-        then Error "division by zero"
-        else Atom (ia `div` ib)
-    x -> x
-  x -> x
+builtinDiv ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (Atom ia, Atom ib) -> if ib == 0
+    then Error "division by zero"
+    else Atom (ia `div` ib)
+  (Atomf ia, Atomf ib) -> Atomf (ia / ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinDiv _ _ = Error "Bad number of args to div"
 
 builtinMod :: Context -> [Ast] -> Ast
-builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib ->
-      if ib == 0
-        then Error "modulo by zero"
-        else Atom (ia `mod` ib)
-    x -> x
-  x -> x
+builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (Atom ia, Atom ib) -> if ib == 0
+    then Error "division by zero"
+    else Atom (ia `mod` ib)
+  (Atomf ia, Atomf ib) -> Error "float mod"
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinMod _ _ = Error "Bad number of args to mod"
