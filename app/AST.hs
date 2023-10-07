@@ -46,6 +46,9 @@ execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
 execCall ctx call args =
   ( ctx,
     case evalAST ctx call of
+      (ctx2, Func name binds expr) -> case execCallDistribute ctx2 binds args of
+        Just jLocalCtx -> snd (evalAST jLocalCtx expr)
+        Nothing -> Error ("incorrect args to function '" ++ name ++ "'")
       (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
         Just jLocalCtx -> snd (evalAST jLocalCtx expr)
         Nothing -> Error "incorrect args to lambda"
