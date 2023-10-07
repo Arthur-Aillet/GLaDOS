@@ -9,12 +9,10 @@ module ParserSExpr (module ParserSExpr) where
 
 import Control.Applicative (Alternative ((<|>)))
 import ParserBool (parseBool)
-import ParserChar (parseAnyChar)
 import ParserInt (parseFloat, parseInt)
 import ParserString (parseSym)
 import ParserType (Parser (..))
--- import SParser (SExpr (..))
-import SyntaxParser (parseList, parseSome)
+import SyntaxParser (parseList)
 
 data SExpr
   = SInt Int

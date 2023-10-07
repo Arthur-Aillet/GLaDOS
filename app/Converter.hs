@@ -7,7 +7,7 @@
 
 module Converter (sexprToAST) where
 
-import AST (Ast (Atom, Call, Define, If, Lambda, Symbol))
+import AST (Ast (Atom, Call, Define, If, Lambda, Symbol, Func))
 import ParserSExpr (SExpr (SInt, SList, SSym))
 
 convertArgsContinuous :: [SExpr] -> Maybe [Ast]
@@ -35,13 +35,21 @@ sexprToAST (SList [SSym "define", SSym name, s]) = case mexpr of
 sexprToAST (SList [SSym "define", SList (SSym name : args), expr]) =
   case convertSymbols args of
     (Just jArgs) -> case sexprToAST expr of
-      (Just jExpr) -> Just (Define name (Lambda jArgs jExpr))
+      (Just jExpr) -> Just (Define name (Func name jArgs jExpr))
       Nothing -> Nothing
     _ -> Nothing
 sexprToAST (SList [SSym "if", _if, _then, _else]) =
-  case (sexprToAST _if, sexprToAST _then, sexprToAST _else) of
-    (Just jIf, Just jThen, Just jElse) -> Just (If jIf jThen jElse)
-    _ -> Nothing
+    case (sexprToAST _if, sexprToAST _then, sexprToAST _else) of
+        (Just jIf, Just jThen, Just jElse) -> Just (If jIf jThen jElse)
+        _ -> Nothing
+
+sexprToAST (SList [SSym "lambda", SList args, expr]) =
+    case convertSymbols args of
+      (Just jArgs) -> case sexprToAST expr of
+        (Just jExpr) -> Just (Lambda jArgs jExpr)
+        Nothing -> Nothing
+      _ -> Nothing
+
 sexprToAST (SList (SSym name : args)) = case convertArgsContinuous args of
   (Just jArgs) -> Just (Call (Symbol name) jArgs)
   _ -> Nothing
