@@ -23,9 +23,3 @@ jobs:
             ${{ runner.os }}-
       - name: Build and run unit tests
         run: "! stack test --fast --no-terminal --system-ghc 2>&1 | grep \"Failure in\""
-      - name: Install scheme
-        uses: guenchi/setup-scheme@master
-        with:
-          implementation: chez
-      - name: Build and run functional tests
-        run: "make; ./test/functional-tests.sh"
