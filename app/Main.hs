@@ -18,6 +18,14 @@ import System.Exit
 import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
 import Data.List
 import System.Console.Haskeline
+    ( getInputLine,
+      completeWord,
+      simpleCompletion,
+      runInputT,
+      Completion,
+      InputT,
+      Settings(Settings, autoAddHistory, complete, historyFile), outputStrLn )
+import System.Console.Haskeline.History
 import Control.Monad.IO.Class
 
 import System.Timeout (timeout)
@@ -51,7 +59,7 @@ getInstructions context = do
   new_line <- runInputT
                 Settings {
                   complete = completeWord Nothing " \t" $ return . search (keys context),
-                  historyFile = Nothing,
+                  historyFile = Just "history",
                   autoAddHistory = True
                 }
                 haskelineGetline
