@@ -57,7 +57,7 @@ getInstructions context = do
   new_line <- runInputT
                 Settings {
                   complete = completeWord Nothing " \t" $ return . search (keys context),
-                  historyFile = Just "~/.history",
+                  historyFile = Just ".history",
                   autoAddHistory = True
                 }
                 haskelineGetline
