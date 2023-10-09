@@ -6,7 +6,7 @@
 -}
 
 module Ast
-  ( 
+  (
     Atom (AtomI, AtomF),
     Ast (Symbol, AAtom, Define, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
@@ -19,8 +19,6 @@ module Ast
     isBuiltin,
     expectAtom,
     binOp,
-    builtinEq,
-    builtinLt,
     builtinDiv,
     builtinMod,
   )
@@ -28,12 +26,18 @@ where
 
 import Data.HashMap.Lazy (HashMap, empty, insert, (!?))
 
-
 data Atom
   = AtomI Int
   | AtomF Float
   deriving (Show)
   -- | Truth Bool
+
+expectAtom :: (Context, Ast) -> Ast
+expectAtom (_, AAtom i) = AAtom i
+expectAtom (_, Truth t) = Truth t
+expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
+expectAtom (_, Error string) = Error string
+expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
 
 instance Num Atom where
   (+) (AtomI a) (AtomI b) = AtomI (a + b)
@@ -96,7 +100,7 @@ emptyContext = empty
 
 displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("Error: " ++ s)
-displayAST (Null) = return ()
+displayAST Null = return ()
 displayAST (AAtom (AtomI i)) = print i
 displayAST (AAtom (AtomF f)) = print f
 displayAST (Truth True) = putStrLn "#t"
@@ -107,7 +111,7 @@ displayAST (Builtin name _) = putStrLn $ "#<procedure " ++ name ++ ">"
 displayAST (Symbol x) = if isBuiltin x
   then putStrLn $ "#<procedure " ++ x ++ ">"
   else putStrLn $ "#<symbol " ++ show x ++ ">"
-displayAST (x) = putStrLn $ "#inevaluable (" ++ show x ++ ")"
+displayAST x = putStrLn $ "#inevaluable (" ++ show x ++ ")"
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
 execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
@@ -135,8 +139,13 @@ execCall ctx call args =
   )
 
 execBuiltins :: Context -> String -> [Ast] -> Ast
-execBuiltins ctx "<" xs = builtinLt ctx xs
-execBuiltins ctx "eq?" xs = builtinEq ctx xs
+execBuiltins ctx "==" xs = builtinPredicates Eq ctx xs
+execBuiltins ctx "eq?" xs = builtinPredicates Eq ctx xs
+execBuiltins ctx "<" xs = builtinPredicates Lt ctx xs
+execBuiltins ctx "<=" xs = builtinPredicates LEt ctx xs
+execBuiltins ctx ">" xs = builtinPredicates Gt ctx xs
+execBuiltins ctx ">=" xs = builtinPredicates GEt ctx xs
+execBuiltins ctx "!=" xs = builtinPredicates NEq ctx xs
 execBuiltins ctx "+" xs = binOp (+) ctx xs
 execBuiltins ctx "-" xs = binOp (-) ctx xs
 execBuiltins ctx "*" xs = binOp (*) ctx xs
@@ -146,6 +155,11 @@ execBuiltins _ call _ = Error ("Symbol '" ++ call ++ "' is not bound")
 
 isBuiltin :: String -> Bool
 isBuiltin "<" = True
+isBuiltin ">" = True
+isBuiltin "<=" = True
+isBuiltin ">=" = True
+isBuiltin "==" = True
+isBuiltin "!=" = True
 isBuiltin "eq?" = True
 isBuiltin "+" = True
 isBuiltin "-" = True
@@ -177,13 +191,6 @@ evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
   _ -> evalAST ctx _then
 evalAST ctx x = (ctx, x)
 
-expectAtom :: (Context, Ast) -> Ast
-expectAtom (_, AAtom i) = AAtom i
-expectAtom (_, Truth t) = Truth t
-expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
-expectAtom (_, Error string) = Error string
-expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
-
 binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
 binOp _ _ [] = AAtom 0
 binOp _ _ [Error a] = Error a
@@ -196,23 +203,6 @@ binOp op ctx (a:b:s) = binOp op ctx (this:s)
         (_, Error x) -> Error x
         (x, _) -> x
 binOp _ _ [_] = Error "Bad number of args to binary operand"
-
-builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
-  (AAtom ia, AAtom ib) -> Truth (ia == ib)
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  (x, _) -> x
-builtinEq _ _ = Error "Bad number of args to eq?"
-
-builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
-  (AAtom ia, AAtom ib) -> Truth (ia < ib)
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  (x, _) -> x
-builtinLt _ _ = Error "Bad number of args to <"
-
 
 builtinDiv :: Context -> [Ast] -> Ast
 builtinDiv _ [] = AAtom 0
@@ -239,5 +229,31 @@ builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST c
   (_, AAtom (AtomF _)) -> Error "float mod"
   (Error x, _) -> Error x
   (_, Error x) -> Error x
-  (_) -> Error "mod of non-integer"
+  _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
+
+data Predicates 
+    = Eq
+    | Lt
+    | LEt
+    | Gt
+    | GEt
+    | NEq
+    deriving (Eq, Show)
+
+swPredicates :: (Ord a) => Predicates -> (a -> a -> Bool)
+swPredicates Eq = (==)
+swPredicates Lt = (<)
+swPredicates LEt = (<=)
+swPredicates Gt = (>)
+swPredicates GEt = (>=)
+swPredicates NEq = (/=)
+
+builtinPredicates :: Predicates -> Context -> [Ast] -> Ast
+builtinPredicates predi ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (op ia ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
+  where op = swPredicates predi
+builtinPredicates predi _ _ = Error ("Bad number of args to predicate " ++ show predi)
