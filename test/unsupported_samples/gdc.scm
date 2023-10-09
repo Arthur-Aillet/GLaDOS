@@ -1,0 +1,15 @@
+(define (gcd x y)
+    (if (eq? y 0)
+        x
+        (gcd y (mod x y))
+    )
+)
+
+(gcd 3 9)
+(gcd 9 3)
+(gcd 3 0)
+(gcd 3 -9)
+(gcd -3 -9)
+(gcd 0 0)
+(gcd -1 -2)
+(gcd -1 2)

@@ -25,7 +25,7 @@ data SExpr
 parseSExpr :: Parser SExpr
 parseSExpr =
   (SList <$> parseList parseSExpr)
-    <|> (SInt <$> parseInt)
     <|> (SFloat <$> parseFloat)
+    <|> (SInt <$> parseInt)
     <|> (SBool <$> parseBool)
     <|> (SSym <$> parseSym)
