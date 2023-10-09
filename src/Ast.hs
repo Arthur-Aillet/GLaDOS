@@ -15,6 +15,8 @@ module Ast
     execCall,
     execBuiltins,
     Context,
+    builtinPredicates,
+    Predicates(..),
     emptyContext,
     isBuiltin,
     expectAtom,
