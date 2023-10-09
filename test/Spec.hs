@@ -1,3 +1,4 @@
+import AstSpec (parserASTTests)
 import Control.Monad
 import ParserSpec (parserTests)
 import Test.HUnit
@@ -8,5 +9,6 @@ main = Control.Monad.void (runTestTT tests)
 tests :: Test
 tests =
   TestList
-    [ parserTests
+    [ parserTests,
+      parserASTTests
     ]
