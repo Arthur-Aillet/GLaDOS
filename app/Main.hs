@@ -16,7 +16,6 @@ import PositionType
 import SyntaxParser (parseManyValidOrEmpty)
 import System.Exit
 import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
-import Data.List
 import System.Console.Haskeline
     ( getInputLine,
       completeWord,
@@ -24,15 +23,15 @@ import System.Console.Haskeline
       runInputT,
       Completion,
       InputT,
-      Settings(Settings, autoAddHistory, complete, historyFile), outputStrLn )
-import System.Console.Haskeline.History
+      Settings(Settings, autoAddHistory, complete, historyFile) )
 import Control.Monad.IO.Class
 
 import System.Timeout (timeout)
 import Data.HashMap.Internal.Strict (keys)
+import Data.List (isPrefixOf)
 
---would be sweet if i ever find how to expand this based on the context
-keywords = ["(define", "(lambda", "(eq?", "(div", "(mod", "(if"]
+keywords :: [String]
+keywords = ["(define", "define", "(lambda", "lambda", "(eq?", "eq?", "(div", "div", "(mod", "mod", "(if", "if"]
 
 search :: [String] -> String -> [Completion]
 search symbols str = map simpleCompletion $ filter (str `isPrefixOf`) (keywords ++ symbols ++ map ('(' :) symbols)
@@ -48,18 +47,17 @@ executeFile = do
 
 haskelineGetline :: InputT IO String
 haskelineGetline = do
-                    line <- getInputLine "\ESC[31m\STXG\ESC[0;33m\STXL\ESC[3;32m\STXa\ESC[0;32m\STXD\ESC[34m\STXO\ESC[35m\STXS\ESC[0m\STX>:"
-                    case line of
+                    input <- getInputLine "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+                    case input of
                       Nothing -> return ""
                       Just str -> return str
 
 getInstructions :: Context -> IO ()
 getInstructions context = do
-  print (keys context)
   new_line <- runInputT
                 Settings {
                   complete = completeWord Nothing " \t" $ return . search (keys context),
-                  historyFile = Just "history",
+                  historyFile = Just "~/.history",
                   autoAddHistory = True
                 }
                 haskelineGetline
