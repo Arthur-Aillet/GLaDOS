@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import AST (Context, displayAST, emptyContext, evalAST)
+import Ast (Context, displayAST, emptyContext, evalAST)
 import Converter (sexprToAST)
 import ParserError ( printErr )
 import ParserSExpr ( parseSExpr, SExpr )
