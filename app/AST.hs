@@ -32,6 +32,9 @@ data Ast
 
 type Context = (HashMap String Ast, Int)
 
+incrDepth :: Context -> Context
+incrDepth (ctx, depth) = (ctx, depth + 1)
+
 emptyContext :: Context
 emptyContext = (empty, 0)
 
@@ -90,28 +93,32 @@ isBuiltin "mod" = True
 isBuiltin _ = False
 
 evalAST :: Context -> Ast -> (Context, Ast)
-evalAST ctx (Error msg) = (ctx, Error msg)
-evalAST ctx Null = (ctx, Error "expression has no value")
+evalAST ctx (Error msg) = (incrDepth ctx, Error msg)
+evalAST ctx Null = (incrDepth ctx, Error "expression has no value")
 evalAST ctx (Symbol sym) = case fst ctx !? sym of
-  Just jast -> (ctx, jast)
+  Just jast -> (incrDepth ctx, jast)
   Nothing ->
     if isBuiltin sym
-      then (ctx, Symbol sym)
-      else (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
-evalAST (ctx, 0) (Define name x) = ((insert name val ctx2, 1), Null)
+      then (incrDepth ctx, Symbol sym)
+      else (incrDepth ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
+evalAST (ctx, 0) (Define name x) = case val of
+  Error err -> ((ctx, 1), Error err)
+  val2 -> ((insert name val2 ctx, 1), Null)
   where
-    ((ctx2, _), val) = evalAST (ctx, 1) x
-evalAST (ctx, depth) (Define name _) = ((ctx, depth), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
-evalAST ctx (Atom i) = (ctx, Atom i)
-evalAST ctx (Truth t) = (ctx, Truth t)
+    val = expectAtom (evalAST (ctx, 1) x)
+evalAST (ctx, depth) (Define name _) =
+  ((ctx, depth + 1), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
+evalAST ctx (Atom i) = (incrDepth ctx, Atom i)
+evalAST ctx (Truth t) = (incrDepth ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
 evalAST ctx (Call expr args) = execCall ctx expr args
-evalAST ctx (Builtin name args) = (ctx, execBuiltins ctx name args)
-evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
-  Error err -> (ctx, Error err)
-  Truth False -> evalAST ctx _else
-  _ -> evalAST ctx _then
-evalAST ctx x = (ctx, x)
+evalAST ctx (Builtin name args) = (incrDepth ctx, execBuiltins ctx name args)
+evalAST ctx (If _if _then _else) =
+  case expectAtom (evalAST (incrDepth ctx) _if) of
+    Error err -> (incrDepth ctx, Error err)
+    Truth False -> evalAST (incrDepth ctx) _else
+    _ -> evalAST (incrDepth ctx) _then
+evalAST ctx x = (incrDepth ctx, x)
 
 expectAtom :: (Context, Ast) -> Ast
 expectAtom (_, Atom i) = Atom i
