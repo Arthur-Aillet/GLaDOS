@@ -28,10 +28,14 @@ format:
 format_check:
 	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
 	ormolu -m 'check' $${sourceFiles[*]}
+
 test-run:
 	stack test --coverage
 	stack hpc report --all --destdir test/coverage
 
-test: test-run
+funct-tests:
+	./test/functional-tests.sh
 
-.PHONY: all clean fclean re quick test-run format format-check
+test: test-run funct-tests
+
+.PHONY: all clean fclean re quick test test-run funct-tests format format-check
