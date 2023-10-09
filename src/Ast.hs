@@ -194,7 +194,8 @@ binOp op ctx (a:b:s) = binOp op ctx (this:s)
         (Error x, _) -> Error x
         (_, Error x) -> Error x
         (x, _) -> x
-binOp _ _ _ = Error "Bad number of args to binary operand"
+binOp _ _ [Error a] = Error a
+binOp _ _ [_] = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
 builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
@@ -227,7 +228,7 @@ builtinDiv ctx (a:b:s) = case this of
       (Error x, _) -> Error x
       (_, Error x) -> Error x
       (x, _) -> x
-builtinDiv _ _ = Error "Bad number of args to binary operand (div)"
+builtinDiv _ _ = Error "Bad number of args to div"
 
 builtinMod :: Context -> [Ast] -> Ast
 builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
@@ -239,4 +240,4 @@ builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST c
   (Error x, _) -> Error x
   (_, Error x) -> Error x
   (_) -> Error "mod of non-integer"
-builtinMod _ _ = Error "Bad number of args to binary operand (mod)"
+builtinMod _ _ = Error "Bad number of args to mod"
