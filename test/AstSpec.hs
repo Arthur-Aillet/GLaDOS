@@ -1,14 +1,13 @@
 module AstSpec (parserASTTests) where
 
 import Ast
-  ( Ast (AAtom, Builtin, Call, Define, Error, Func, If, Lambda, Null, Symbol, Truth),
+  ( Ast (AAtom, Builtin, Call, Define, Error, If, Lambda, Null, Symbol, Truth),
     Context,
     binOp,
     builtinDiv,
     builtinEq,
     builtinLt,
     builtinMod,
-    displayAST,
     emptyContext,
     evalAST,
     execBuiltins,
@@ -17,9 +16,7 @@ import Ast
     expectAtom,
     isBuiltin,
   )
-import Data.Bool (Bool (True))
 import Data.HashMap.Lazy
-import GHC.Plugins (lambda)
 import Test.HUnit
 
 parserASTTests :: Test

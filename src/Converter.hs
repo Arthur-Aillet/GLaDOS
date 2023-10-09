@@ -56,4 +56,3 @@ sexprToAST (SFloat x) = Just $ AAtom $ AtomF x
 sexprToAST (SBool x) = Just $ Truth x
 sexprToAST (SSym x) = Just $ Symbol x
 sexprToAST (SList _) = Nothing
-sexprToAST _ = Nothing

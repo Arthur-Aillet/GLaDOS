@@ -64,10 +64,10 @@ instance Eq Atom where
   (==) (AtomF a) (AtomF b) = a == b
 
 instance Ord Atom where
-  (<) (AtomI a) (AtomI b) = a < b
-  (<) (AtomF a) (AtomI b) = a < toEnum b
-  (<) (AtomI a) (AtomF b) = toEnum a < b
-  (<) (AtomF a) (AtomF b) = a < b
+  (<=) (AtomI a) (AtomI b) = a <= b
+  (<=) (AtomF a) (AtomI b) = a <= toEnum b
+  (<=) (AtomI a) (AtomF b) = toEnum a <= b
+  (<=) (AtomF a) (AtomF b) = a <= b
 
 atomDiv :: Atom -> Atom -> Atom
 atomDiv (AtomI a) (AtomI b) = AtomI (a `div` b)
@@ -186,7 +186,8 @@ expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
 
 binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
 binOp _ _ [] = AAtom 0
-binOp op ctx [AAtom a] = AAtom a
+binOp _ _ [Error a] = Error a
+binOp _ _ [AAtom a] = AAtom a
 binOp op ctx (a:b:s) = binOp op ctx (this:s)
     where
       this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
@@ -194,7 +195,6 @@ binOp op ctx (a:b:s) = binOp op ctx (this:s)
         (Error x, _) -> Error x
         (_, Error x) -> Error x
         (x, _) -> x
-binOp _ _ [Error a] = Error a
 binOp _ _ [_] = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
@@ -215,8 +215,8 @@ builtinLt _ _ = Error "Bad number of args to <"
 
 
 builtinDiv :: Context -> [Ast] -> Ast
-builtinDiv ctx [] = AAtom 0
-builtinDiv ctx [AAtom a] = AAtom a
+builtinDiv _ [] = AAtom 0
+builtinDiv _ [AAtom a] = AAtom a
 builtinDiv ctx (a:b:s) = case this of
     Error x -> Error x
     _ -> builtinDiv ctx (this:s)
