@@ -6,7 +6,7 @@
 -}
 
 module Ast
-  ( 
+  (
     Atom (AtomI, AtomF),
     Ast (Symbol, AAtom, Define, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
