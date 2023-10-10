@@ -1,12 +1,9 @@
-module InputManagment (haskelineGetline)
-where
+module InputManagment (haskelineGetline) where
 
-import System.Console.Haskeline
 import Control.Monad.IO.Class
-
 import Data.HashMap.Internal.Strict (keys)
 import Data.List (isPrefixOf)
-
+import System.Console.Haskeline
 
 keywords :: [String]
 keywords = ["(define", "define", "(lambda", "lambda", "(eq?", "eq?", "(div", "div", "(mod", "mod", "(if", "if"]
@@ -25,7 +22,7 @@ executeFile = do
 
 haskelineGetline :: InputT IO String
 haskelineGetline = do
-                    input <- getInputLine "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
-                    case input of
-                      Nothing -> return ""
-                      Just str -> return str
+  input <- getInputLine "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+  case input of
+    Nothing -> return ""
+    Just str -> return str
