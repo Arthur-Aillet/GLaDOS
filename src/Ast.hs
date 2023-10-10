@@ -117,12 +117,14 @@ displayAST (Symbol x) = if isBuiltin x
   then putStrLn $ "#<procedure " ++ x ++ ">"
   else putStrLn $ "#<symbol " ++ show x ++ ">"
 displayAST x = putStrLn $ "#inevaluable (" ++ show x ++ ")"
+
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
-execCallDistribute (ctx, depth) (s : ss) (x : xs) = case execCallDistribute (ctx, depth) ss xs of
-  Just (next, depth2) -> case evalAST (ctx, depth) x of
-    (_, y) -> Just (insert s y next, depth + 1)
-  Nothing -> Nothing
+execCallDistribute (ctx, depth) (s : ss) (x : xs) =
+  case execCallDistribute (ctx, depth) ss xs of
+    Just (next, _) -> case evalAST (ctx, depth) x of
+      (_, y) -> Just (insert s y next, depth + 1)
+    Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
