@@ -53,7 +53,7 @@ haskelineGetline = do
                       Just str -> return str
 
 getInstructions :: Context -> IO ()
-getInstructions context = do
+getInstructions (context, depth) = do
   new_line <- runInputT
                 Settings {
                   complete = completeWord Nothing " \t" $ return . search (keys context),
@@ -65,7 +65,7 @@ getInstructions context = do
     Left err -> liftIO (printErr err) >> liftIO (exitWith (ExitFailure 84))
 
     Right (sexpr, _, _) -> do
-      new_context <- liftIO (loopOnCommands context sexpr)
+      new_context <- liftIO (loopOnCommands (context, depth) sexpr)
       getInstructions new_context
 
 main :: IO ()
