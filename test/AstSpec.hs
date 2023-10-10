@@ -5,8 +5,7 @@ import Ast
     Context,
     binOp,
     builtinDiv,
-    builtinEq,
-    builtinLt,
+    builtinPredicates,
     builtinMod,
     emptyContext,
     evalAST,
@@ -15,6 +14,7 @@ import Ast
     execCallDistribute,
     expectAtom,
     isBuiltin,
+    Predicates(..)
   )
 import Data.HashMap.Lazy
 import Test.HUnit
@@ -30,8 +30,7 @@ parserASTTests =
       "expectAtom" ~: expectAtomTests,
       "evalAST" ~: evalASTTests,
       "binOp" ~: binOpTests,
-      "builtinEq" ~: builtinEqTests,
-      "builtinLt" ~: builtinLtTests,
+      "builtinPredicates" ~: builtinPredicatesTests,
       "builtinDiv" ~: builtinDivTests,
       "builtinMod" ~: builtinModTests
     ]
@@ -80,6 +79,16 @@ execBuiltinsTests =
       "builtin < true" ~: execBuiltins exempleContext "<" [AAtom 10, AAtom 15] ~?= Truth True,
       "builtin eq false" ~: execBuiltins exempleContext "eq?" [AAtom 15, AAtom 10] ~?= Truth False,
       "builtin eq true" ~: execBuiltins exempleContext "eq?" [AAtom 15, AAtom 15] ~?= Truth True,
+      "builtin == false" ~: execBuiltins exempleContext "==" [AAtom 15, AAtom 10] ~?= Truth False,
+      "builtin == true" ~: execBuiltins exempleContext "==" [AAtom 15, AAtom 15] ~?= Truth True,
+      "builtin != false" ~: execBuiltins exempleContext "!=" [AAtom 15, AAtom 10] ~?= Truth True,
+      "builtin != true" ~: execBuiltins exempleContext "!=" [AAtom 15, AAtom 15] ~?= Truth False,
+      "builtin <= false" ~: execBuiltins exempleContext "<=" [AAtom 15, AAtom 10] ~?= Truth False,
+      "builtin <= true and equal" ~: execBuiltins exempleContext "<=" [AAtom 15, AAtom 15] ~?= Truth True,
+      "builtin <= true " ~: execBuiltins exempleContext "<=" [AAtom 15, AAtom 16] ~?= Truth True,
+      "builtin >= true" ~: execBuiltins exempleContext ">=" [AAtom 15, AAtom 10] ~?= Truth True,
+      "builtin >= true and equal" ~: execBuiltins exempleContext ">=" [AAtom 15, AAtom 15] ~?= Truth True,
+      "builtin >= false" ~: execBuiltins exempleContext ">=" [AAtom 15, AAtom 16] ~?= Truth False,
       "builtin +" ~: execBuiltins exempleContext "+" [AAtom 15, AAtom 10] ~?= AAtom 25,
       "builtin -" ~: execBuiltins exempleContext "-" [AAtom 15, AAtom 10] ~?= AAtom 5,
       "builtin *" ~: execBuiltins exempleContext "*" [AAtom 15, AAtom 10] ~?= AAtom 150,
@@ -92,6 +101,11 @@ isBuiltinTests :: Test
 isBuiltinTests =
   TestList
     [ "Test < is a builtin" ~: isBuiltin "<" ~?= True,
+      "Test > is a builtin" ~: isBuiltin ">" ~?= True,
+      "Test >= is a builtin" ~: isBuiltin ">=" ~?= True,
+      "Test <= is a builtin" ~: isBuiltin "<=" ~?= True,
+      "Test == is a builtin" ~: isBuiltin "==" ~?= True,
+      "Test != is a builtin" ~: isBuiltin "!=" ~?= True,
       "Test eq? is a builtin" ~: isBuiltin "eq?" ~?= True,
       "Test + is a builtin" ~: isBuiltin "+" ~?= True,
       "Test - is a builtin" ~: isBuiltin "-" ~?= True,
@@ -140,24 +154,25 @@ binOpTests =
       "Error second argument" ~: binOp (+) exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound"
     ]
 
-builtinEqTests :: Test
-builtinEqTests =
+builtinPredicatesTests :: Test
+builtinPredicatesTests =
   TestList
-    [ "Equality True" ~: builtinEq exempleContext [AAtom 3, AAtom 3] ~?= Truth True,
-      "Equality False" ~: builtinEq exempleContext [AAtom 3, AAtom 5] ~?= Truth False,
-      "Error first argument" ~: builtinEq exempleContext [Symbol "foo", AAtom 3] ~?= Error "Symbol 'foo' is not bound",
-      "Error second argument" ~: builtinEq exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
-      "Error third argument" ~: builtinEq exempleContext [AAtom 2, AAtom 3, AAtom 4] ~?= Error "Bad number of args to eq?"
-    ]
-
-builtinLtTests :: Test
-builtinLtTests =
-  TestList
-    [ "Less Than True" ~: builtinLt exempleContext [AAtom 2, AAtom 3] ~?= Truth True,
-      "Less Than False" ~: builtinLt exempleContext [AAtom 3, AAtom 2] ~?= Truth False,
-      "Error first argument" ~: builtinLt exempleContext [Symbol "foo", AAtom 3] ~?= Error "Symbol 'foo' is not bound",
-      "Error second argument" ~: builtinLt exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
-      "Error third argument" ~: builtinLt exempleContext [AAtom 2, AAtom 3, AAtom 4] ~?= Error "Bad number of args to <"
+    [ "Equality True" ~: builtinPredicates Eq exempleContext [AAtom 3, AAtom 3] ~?= Truth True,
+      "Equality False" ~: builtinPredicates Eq exempleContext [AAtom 3, AAtom 5] ~?= Truth False,
+      "Equality error first argument" ~: builtinPredicates Eq exempleContext [Symbol "foo", AAtom 3] ~?= Error "Symbol 'foo' is not bound",
+      "Equality error second argument" ~: builtinPredicates Eq exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
+      "Equality error third argument" ~: builtinPredicates Eq exempleContext [AAtom 2, AAtom 3, AAtom 4] ~?= Error "Bad number of args to predicate Eq",
+      "Not Equality False" ~: builtinPredicates NEq exempleContext [AAtom 3, AAtom 3] ~?= Truth False,
+      "Not Equality True" ~: builtinPredicates NEq exempleContext [AAtom 3, AAtom 5] ~?= Truth True,
+      "Not Equality error first argument" ~: builtinPredicates NEq exempleContext [Symbol "foo", AAtom 3] ~?= Error "Symbol 'foo' is not bound",
+      "Not Equality error second argument" ~: builtinPredicates NEq exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
+      "Not Equality error third argument" ~: builtinPredicates NEq exempleContext [AAtom 2, AAtom 3, AAtom 4] ~?= Error "Bad number of args to predicate NEq",
+      "Lower than False" ~: builtinPredicates Lt exempleContext [AAtom 3, AAtom 3] ~?= Truth False,
+      "Lower than True" ~: builtinPredicates Lt exempleContext [AAtom 3, AAtom 5] ~?= Truth True,
+      "Lower than not equal False" ~: builtinPredicates Lt exempleContext [AAtom 3, AAtom 3] ~?= Truth False,
+      "Lower than error first argument" ~: builtinPredicates Lt exempleContext [Symbol "foo", AAtom 3] ~?= Error "Symbol 'foo' is not bound",
+      "Lower than error second argument" ~: builtinPredicates Lt exempleContext [AAtom 3, Symbol "foo"] ~?= Error "Symbol 'foo' is not bound",
+      "Lower than error third argument" ~: builtinPredicates Lt exempleContext [AAtom 2, AAtom 3, AAtom 4] ~?= Error "Bad number of args to predicate Lt"
     ]
 
 builtinDivTests :: Test

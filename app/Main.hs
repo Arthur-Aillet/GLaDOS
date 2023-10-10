@@ -63,6 +63,7 @@ getInstructions context = do
                 haskelineGetline
   case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
     Left err -> liftIO (printErr err) >> liftIO (exitWith (ExitFailure 84))
+
     Right (sexpr, _, _) -> do
       new_context <- liftIO (loopOnCommands context sexpr)
       getInstructions new_context
@@ -82,7 +83,7 @@ main = do
 loopOnCommands :: Context -> [SExpr] -> IO Context
 loopOnCommands ctx [] = return ctx
 loopOnCommands ctx (expr : xs) = case sexprToAST expr of
-  Just ast -> displayAST res >> loopOnCommands newCtx xs
+  Just ast -> displayAST res >> loopOnCommands (newCtx, 0) xs
     where
-      (newCtx, res) = evalAST ctx ast
+      ((newCtx, _), res) = evalAST ctx ast
   Nothing -> return ctx
