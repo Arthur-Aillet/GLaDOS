@@ -14,12 +14,12 @@ module Ast
     execCall,
     execBuiltins,
     Context,
+    builtinPredicates,
+    Predicates(..),
     emptyContext,
     isBuiltin,
     expectAtom,
     binOp,
-    builtinEq,
-    builtinLt,
     builtinDiv,
     builtinMod,
   )
@@ -33,6 +33,13 @@ data Atom
   deriving (Show)
 
 -- \| Truth Bool
+
+expectAtom :: (Context, Ast) -> Ast
+expectAtom (_, AAtom i) = AAtom i
+expectAtom (_, Truth t) = Truth t
+expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
+expectAtom (_, Error string) = Error string
+expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
 
 instance Num Atom where
   (+) (AtomI a) (AtomI b) = AtomI (a + b)
@@ -88,14 +95,17 @@ data Ast
   | If Ast Ast Ast -- branching condition
   deriving (Show, Eq)
 
-type Context = (HashMap String Ast)
+type Context = (HashMap String Ast, Int)
+
+incrDepth :: Context -> Context
+incrDepth (ctx, depth) = (ctx, depth + 1)
 
 emptyContext :: Context
-emptyContext = empty
+emptyContext = (empty, 0)
 
 displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("Error: " ++ s)
-displayAST (Null) = return ()
+displayAST Null = return ()
 displayAST (AAtom (AtomI i)) = print i
 displayAST (AAtom (AtomF f)) = print f
 displayAST (Truth True) = putStrLn "#t"
@@ -111,10 +121,11 @@ displayAST (x) = putStrLn $ "#inevaluable (" ++ show x ++ ")"
 
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
-execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
-  Just next -> case evalAST ctx x of
-    (_, y) -> Just $ insert s y next
-  Nothing -> Nothing
+execCallDistribute (ctx, depth) (s : ss) (x : xs) =
+  case execCallDistribute (ctx, depth) ss xs of
+    Just (next, _) -> case evalAST (ctx, depth) x of
+      (_, y) -> Just (insert s y next, depth + 1)
+    Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
@@ -136,54 +147,64 @@ execCall ctx call args =
   )
 
 execBuiltins :: Context -> String -> [Ast] -> Ast
-execBuiltins ctx "<" xs = builtinLt ctx xs
-execBuiltins ctx "eq?" xs = builtinEq ctx xs
+execBuiltins ctx "==" xs = builtinPredicates Eq ctx xs
+execBuiltins ctx "eq?" xs = builtinPredicates Eq ctx xs
+execBuiltins ctx "<" xs = builtinPredicates Lt ctx xs
+execBuiltins ctx "<=" xs = builtinPredicates LEt ctx xs
+execBuiltins ctx ">" xs = builtinPredicates Gt ctx xs
+execBuiltins ctx ">=" xs = builtinPredicates GEt ctx xs
+execBuiltins ctx "!=" xs = builtinPredicates NEq ctx xs
 execBuiltins ctx "+" xs = binOp (+) ctx xs
 execBuiltins ctx "-" xs = binOp (-) ctx xs
 execBuiltins ctx "*" xs = binOp (*) ctx xs
 execBuiltins ctx "div" xs = builtinDiv ctx xs
+execBuiltins ctx "/" xs = builtinDiv ctx xs
 execBuiltins ctx "mod" xs = builtinMod ctx xs
 execBuiltins _ call _ = Error ("Symbol '" ++ call ++ "' is not bound")
 
 isBuiltin :: String -> Bool
 isBuiltin "<" = True
+isBuiltin ">" = True
+isBuiltin "<=" = True
+isBuiltin ">=" = True
+isBuiltin "==" = True
+isBuiltin "!=" = True
 isBuiltin "eq?" = True
 isBuiltin "+" = True
 isBuiltin "-" = True
 isBuiltin "*" = True
 isBuiltin "div" = True
+isBuiltin "/" = True
 isBuiltin "mod" = True
 isBuiltin _ = False
 
 evalAST :: Context -> Ast -> (Context, Ast)
-evalAST ctx (Error msg) = (ctx, Error msg)
-evalAST ctx Null = (ctx, Error "Expression has no value")
-evalAST ctx (Symbol sym) = case ctx !? sym of
-  Just jast -> (ctx, jast)
+evalAST ctx (Error msg) = (incrDepth ctx, Error msg)
+evalAST ctx Null = (incrDepth ctx, Error "Expression has no value")
+evalAST ctx (Symbol sym) = case fst ctx !? sym of
+  Just jast -> (incrDepth ctx, jast)
   Nothing ->
     if isBuiltin sym
-      then (ctx, Symbol sym)
-      else (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
-evalAST ctx (Define name x) = (insert name val ctx2, Null)
+      then (incrDepth ctx, Symbol sym)
+      else (incrDepth ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
+evalAST (ctx, 0) (Define name x) = case val of
+  Error err -> ((ctx, 1), Error err)
+  val2 -> ((insert name val2 ctx, 1), Null)
   where
-    (ctx2, val) = evalAST ctx x
-evalAST ctx (AAtom i) = (ctx, AAtom i)
-evalAST ctx (Truth t) = (ctx, Truth t)
+    val = expectAtom (evalAST (ctx, 1) x)
+evalAST (ctx, depth) (Define name _) =
+  ((ctx, depth + 1), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
+evalAST ctx (AAtom i) = (incrDepth ctx, AAtom i)
+evalAST ctx (Truth t) = (incrDepth ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
 evalAST ctx (Call expr args) = execCall ctx expr args
-evalAST ctx (Builtin name args) = (ctx, execBuiltins ctx name args)
-evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
-  Error err -> (ctx, Error err)
-  Truth False -> evalAST ctx _else
-  _ -> evalAST ctx _then
-evalAST ctx x = (ctx, x)
-
-expectAtom :: (Context, Ast) -> Ast
-expectAtom (_, AAtom i) = AAtom i
-expectAtom (_, Truth t) = Truth t
-expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
-expectAtom (_, Error string) = Error string
-expectAtom (_, x) = Error ("Expected Atom but got: " ++ show x)
+evalAST ctx (Builtin name args) = (incrDepth ctx, execBuiltins ctx name args)
+evalAST ctx (If _if _then _else) =
+  case expectAtom (evalAST (incrDepth ctx) _if) of
+    Error err -> (incrDepth ctx, Error err)
+    Truth False -> evalAST (incrDepth ctx) _else
+    _ -> evalAST (incrDepth ctx) _then
+evalAST ctx x = (incrDepth ctx, x)
 
 binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
 binOp _ _ [] = AAtom 0
@@ -241,5 +262,31 @@ builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ct
   (_, AAtom (AtomF _)) -> Error "float mod"
   (Error x, _) -> Error x
   (_, Error x) -> Error x
-  (_) -> Error "mod of non-integer"
+  _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
+
+data Predicates
+    = Eq
+    | Lt
+    | LEt
+    | Gt
+    | GEt
+    | NEq
+    deriving (Eq, Show)
+
+swPredicates :: (Ord a) => Predicates -> (a -> a -> Bool)
+swPredicates Eq = (==)
+swPredicates Lt = (<)
+swPredicates LEt = (<=)
+swPredicates Gt = (>)
+swPredicates GEt = (>=)
+swPredicates NEq = (/=)
+
+builtinPredicates :: Predicates -> Context -> [Ast] -> Ast
+builtinPredicates predi ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (op ia ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
+  where op = swPredicates predi
+builtinPredicates predi _ _ = Error ("Bad number of args to predicate " ++ show predi)
