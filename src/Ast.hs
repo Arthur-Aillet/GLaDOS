@@ -95,10 +95,13 @@ data Ast
   | If Ast Ast Ast -- branching condition
   deriving (Show, Eq)
 
-type Context = (HashMap String Ast)
+type Context = (HashMap String Ast, Int)
+
+incrDepth :: Context -> Context
+incrDepth (ctx, depth) = (ctx, depth + 1)
 
 emptyContext :: Context
-emptyContext = empty
+emptyContext = (empty, 0)
 
 displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("Error: " ++ s)
@@ -117,10 +120,11 @@ displayAST x = putStrLn $ "#inevaluable (" ++ show x ++ ")"
 
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
-execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
-  Just next -> case evalAST ctx x of
-    (_, y) -> Just $ insert s y next
-  Nothing -> Nothing
+execCallDistribute (ctx, depth) (s : ss) (x : xs) =
+  case execCallDistribute (ctx, depth) ss xs of
+    Just (next, _) -> case evalAST (ctx, depth) x of
+      (_, y) -> Just (insert s y next, depth + 1)
+    Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
@@ -174,27 +178,32 @@ isBuiltin "mod" = True
 isBuiltin _ = False
 
 evalAST :: Context -> Ast -> (Context, Ast)
-evalAST ctx (Error msg) = (ctx, Error msg)
-evalAST ctx Null = (ctx, Error "Expression has no value")
-evalAST ctx (Symbol sym) = case ctx !? sym of
-  Just jast -> (ctx, jast)
+evalAST ctx (Error msg) = (incrDepth ctx, Error msg)
+evalAST ctx Null = (incrDepth ctx, Error "Expression has no value")
+evalAST ctx (Symbol sym) = case fst ctx !? sym of
+  Just jast -> (incrDepth ctx, jast)
   Nothing ->
     if isBuiltin sym
-      then (ctx, Symbol sym)
-      else (ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
-evalAST ctx (Define name x) = (insert name val ctx2, Null)
+      then (incrDepth ctx, Symbol sym)
+      else (incrDepth ctx, Error ("Symbol '" ++ sym ++ "' is not bound"))
+evalAST (ctx, 0) (Define name x) = case val of
+  Error err -> ((ctx, 1), Error err)
+  val2 -> ((insert name val2 ctx, 1), Null)
   where
-    (ctx2, val) = evalAST ctx x
-evalAST ctx (AAtom i) = (ctx, AAtom i)
-evalAST ctx (Truth t) = (ctx, Truth t)
+    val = expectAtom (evalAST (ctx, 1) x)
+evalAST (ctx, depth) (Define name _) =
+  ((ctx, depth + 1), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
+evalAST ctx (AAtom i) = (incrDepth ctx, AAtom i)
+evalAST ctx (Truth t) = (incrDepth ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
 evalAST ctx (Call expr args) = execCall ctx expr args
-evalAST ctx (Builtin name args) = (ctx, execBuiltins ctx name args)
-evalAST ctx (If _if _then _else) = case expectAtom (evalAST ctx _if) of
-  Error err -> (ctx, Error err)
-  Truth False -> evalAST ctx _else
-  _ -> evalAST ctx _then
-evalAST ctx x = (ctx, x)
+evalAST ctx (Builtin name args) = (incrDepth ctx, execBuiltins ctx name args)
+evalAST ctx (If _if _then _else) =
+  case expectAtom (evalAST (incrDepth ctx) _if) of
+    Error err -> (incrDepth ctx, Error err)
+    Truth False -> evalAST (incrDepth ctx) _else
+    _ -> evalAST (incrDepth ctx) _then
+evalAST ctx x = (incrDepth ctx, x)
 
 binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
 binOp _ _ [] = AAtom 0
