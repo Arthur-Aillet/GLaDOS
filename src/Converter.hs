@@ -7,7 +7,7 @@
 
 module Converter (sexprToAST) where
 
-import AST (Ast (AAtom, Truth, Call, Define, If, Lambda, Symbol, Func), Atom (AtomI, AtomF))
+import Ast (Ast (Truth, AAtom, Call, Define, If, Lambda, Symbol, Func), Atom (AtomI, AtomF))
 import ParserSExpr (SExpr (SInt, SList, SSym, SFloat, SBool))
 
 convertArgsContinuous :: [SExpr] -> Maybe [Ast]
@@ -39,17 +39,15 @@ sexprToAST (SList [SSym "define", SList (SSym name : args), expr]) =
       Nothing -> Nothing
     _ -> Nothing
 sexprToAST (SList [SSym "if", _if, _then, _else]) =
-    case (sexprToAST _if, sexprToAST _then, sexprToAST _else) of
-        (Just jIf, Just jThen, Just jElse) -> Just (If jIf jThen jElse)
-        _ -> Nothing
-
+  case (sexprToAST _if, sexprToAST _then, sexprToAST _else) of
+    (Just jIf, Just jThen, Just jElse) -> Just (If jIf jThen jElse)
+    _ -> Nothing
 sexprToAST (SList [SSym "lambda", SList args, expr]) =
-    case convertSymbols args of
-      (Just jArgs) -> case sexprToAST expr of
-        (Just jExpr) -> Just (Lambda jArgs jExpr)
-        Nothing -> Nothing
-      _ -> Nothing
-
+  case convertSymbols args of
+    (Just jArgs) -> case sexprToAST expr of
+      (Just jExpr) -> Just (Lambda jArgs jExpr)
+      Nothing -> Nothing
+    _ -> Nothing
 sexprToAST (SList (SSym name : args)) = case convertArgsContinuous args of
   (Just jArgs) -> Just (Call (Symbol name) jArgs)
   _ -> Nothing
@@ -58,4 +56,3 @@ sexprToAST (SFloat x) = Just $ AAtom $ AtomF x
 sexprToAST (SBool x) = Just $ Truth x
 sexprToAST (SSym x) = Just $ Symbol x
 sexprToAST (SList _) = Nothing
-sexprToAST _ = Nothing
