@@ -32,7 +32,7 @@ getInstructions context = do
   putStr "GLaDOS> "
   new_line <- getLine
   case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
-    Left err -> printErr err >> exitWith (ExitFailure 84)
+    Left err -> printErr err >> getInstructions context
     Right (sexpr, _, _) -> do
       new_context <- loopOnCommands context sexpr
       getInstructions new_context
