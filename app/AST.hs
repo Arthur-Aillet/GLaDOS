@@ -6,7 +6,9 @@
 -}
 
 module AST
-  ( Ast (Symbol, Define, Atom, Truth, Lambda, Func, Call, Builtin, If),
+  (
+    Atom (AtomI, AtomF),
+    Ast (Symbol, Define, AAtom, Truth, Lambda, Func, Call, Builtin, If),
     evalAST,
     displayAST,
     Context,
@@ -16,12 +18,59 @@ where
 
 import Data.HashMap.Lazy (HashMap, empty, insert, (!?))
 
+
+data Atom
+  = AtomI Int
+  | AtomF Float
+  deriving (Show)
+  -- | Truth Bool
+
+instance Num Atom where
+  (+) (AtomI a) (AtomI b) = AtomI (a + b)
+  (+) (AtomF a) (AtomI b) = AtomF (a + toEnum b)
+  (+) (AtomI a) (AtomF b) = AtomF (toEnum a + b)
+  (+) (AtomF a) (AtomF b) = AtomF (a + b)
+
+  (*) (AtomI a) (AtomI b) = AtomI (a * b)
+  (*) (AtomF a) (AtomI b) = AtomF (a * toEnum b)
+  (*) (AtomI a) (AtomF b) = AtomF (toEnum a * b)
+  (*) (AtomF a) (AtomF b) = AtomF (a * b)
+
+  abs (AtomI x) = AtomI $ abs x
+  abs (AtomF x) = AtomF $ abs x
+
+  negate (AtomI x) = AtomI $ negate x
+  negate (AtomF x) = AtomF $ negate x
+
+  signum (AtomI x) = AtomI $ signum x
+  signum (AtomF x) = AtomF $ signum x
+
+  fromInteger x = AtomI $ fromEnum x
+
+instance Eq Atom where
+  (==) (AtomI a) (AtomI b) = a == b
+  (==) (AtomF a) (AtomI b) = a == toEnum b
+  (==) (AtomI a) (AtomF b) = toEnum a == b
+  (==) (AtomF a) (AtomF b) = a == b
+
+instance Ord Atom where
+  (<) (AtomI a) (AtomI b) = a < b
+  (<) (AtomF a) (AtomI b) = a < toEnum b
+  (<) (AtomI a) (AtomF b) = toEnum a < b
+  (<) (AtomF a) (AtomF b) = a < b
+
+atomDiv :: Atom -> Atom -> Atom
+atomDiv (AtomI a) (AtomI b) = AtomI (a `div` b)
+atomDiv (AtomF a) (AtomI b) = AtomF (a / toEnum b)
+atomDiv (AtomI a) (AtomF b) = AtomF (toEnum a / b)
+atomDiv (AtomF a) (AtomF b) = AtomF (a / b)
+
 data Ast
   = Error String -- error type with string detail
   | Null -- No-Op or resolved expression leaving no value
   | Symbol String -- Variable that must be bound
   | Define String Ast -- bind an expression to a variable
-  | Atom Int -- Single known value
+  | AAtom Atom -- Single known value of type a
   | Truth Bool -- Single known boolean value
   | Lambda [String] Ast -- expression with local bindings
   | Func String [String] Ast -- named expression with local bindings ?? TODO: verify that this shouldn't just be a Define-Lambda pair
@@ -41,14 +90,17 @@ emptyContext = (empty, 0)
 displayAST :: Ast -> IO ()
 displayAST (Error s) = putStrLn ("evaluation error: " ++ s)
 displayAST (Null) = return ()
-displayAST (Atom i) = print i
+displayAST (AAtom (AtomI i)) = print i
+displayAST (AAtom (AtomF f)) = print f
 displayAST (Truth True) = putStrLn "#t"
 displayAST (Truth False) = putStrLn "#f"
 displayAST (Lambda _ _) = putStrLn "#<procedure>"
 displayAST (Func name _ _) = putStrLn $ "#<procedure " ++ name ++ ">"
 displayAST (Builtin name _) = putStrLn $ "#<procedure " ++ name ++ ">"
-displayAST (_) = putStrLn "#inevaluable"
-
+displayAST (Symbol x) = if isBuiltin x
+  then putStrLn $ "#<procedure " ++ x ++ ">"
+  else putStrLn $ "#<symbol " ++ show x ++ ">"
+displayAST (x) = putStrLn $ "#inevaluable (" ++ show x ++ ")"
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
 execCallDistribute (ctx, depth) (s : ss) (x : xs) = case execCallDistribute (ctx, depth) ss xs of
@@ -61,6 +113,9 @@ execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
 execCall ctx call args =
   ( ctx,
     case evalAST ctx call of
+      (ctx2, Func name binds expr) -> case execCallDistribute ctx2 binds args of
+        Just jLocalCtx -> snd (evalAST jLocalCtx expr)
+        Nothing -> Error ("incorrect args to function '" ++ name ++ "'")
       (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
         Just jLocalCtx -> snd (evalAST jLocalCtx expr)
         Nothing -> Error "incorrect args to lambda"
@@ -108,7 +163,7 @@ evalAST (ctx, 0) (Define name x) = case val of
     val = expectAtom (evalAST (ctx, 1) x)
 evalAST (ctx, depth) (Define name _) =
   ((ctx, depth + 1), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
-evalAST ctx (Atom i) = (incrDepth ctx, Atom i)
+evalAST ctx (AAtom i) = (incrDepth ctx, AAtom i)
 evalAST ctx (Truth t) = (incrDepth ctx, Truth t)
 -- lambda and func go to the default state of no expansion at this state
 evalAST ctx (Call expr args) = execCall ctx expr args
@@ -121,55 +176,65 @@ evalAST ctx (If _if _then _else) =
 evalAST ctx x = (incrDepth ctx, x)
 
 expectAtom :: (Context, Ast) -> Ast
-expectAtom (_, Atom i) = Atom i
+expectAtom (_, AAtom i) = AAtom i
 expectAtom (_, Truth t) = Truth t
 expectAtom (_, Symbol sym) = Error ("Symbol '" ++ sym ++ "' is not bound")
 expectAtom (_, Error string) = Error string
-expectAtom (_, x) = Error ("expected Atom but got: " ++ show x)
+expectAtom (_, x) = Error ("expected AAtom but got: " ++ show x)
 
-binOp :: (Int -> Int -> Int) -> Context -> [Ast] -> Ast
-binOp op ctx [a, b] =
-  case expectAtom (evalAST ctx a) of
-    Atom ia -> case expectAtom (evalAST ctx b) of
-      Atom ib -> Atom (op ia ib)
-      x -> x
-    x -> x
+binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
+binOp _ _ [] = AAtom 0
+binOp op ctx [AAtom a] = AAtom a
+binOp op ctx (a:b:s) = binOp op ctx (this:s)
+    where
+      this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+        (AAtom ia, AAtom ib) -> AAtom (op ia ib)
+        (Error x, _) -> Error x
+        (_, Error x) -> Error x
+        (x, _) -> x
 binOp _ _ _ = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib -> Truth (ia == ib)
-    x -> x
-  x -> x
+builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (ia == ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinEq _ _ = Error "Bad number of args to eq?"
 
 builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib -> Truth (ia < ib)
-    x -> x
-  x -> x
+builtinLt ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (ia < ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
 builtinLt _ _ = Error "Bad number of args to <"
 
+
 builtinDiv :: Context -> [Ast] -> Ast
-builtinDiv ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib ->
-      if ib == 0
+builtinDiv ctx [] = AAtom 0
+builtinDiv ctx [AAtom a] = AAtom a
+builtinDiv ctx (a:b:s) = case this of
+    Error x -> Error x
+    _ -> builtinDiv ctx (this:s)
+  where
+    this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+      (AAtom ia, AAtom ib) -> if ib == 0
         then Error "division by zero"
-        else Atom (ia `div` ib)
-    x -> x
-  x -> x
-builtinDiv _ _ = Error "Bad number of args to div"
+        else AAtom (atomDiv ia ib)
+      (Error x, _) -> Error x
+      (_, Error x) -> Error x
+      (x, _) -> x
+builtinDiv _ _ = Error "Bad number of args to binary operand"
 
 builtinMod :: Context -> [Ast] -> Ast
-builtinMod ctx [a, b] = case expectAtom (evalAST ctx a) of
-  Atom ia -> case expectAtom (evalAST ctx b) of
-    Atom ib ->
-      if ib == 0
-        then Error "modulo by zero"
-        else Atom (ia `mod` ib)
-    x -> x
-  x -> x
+builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
+  (AAtom (AtomI ia), AAtom (AtomI ib)) -> if ib == 0
+    then Error "mod by zero"
+    else AAtom (AtomI (ia `mod` ib))
+  (AAtom (AtomF _), _) -> Error "float mod"
+  (_, AAtom (AtomF _)) -> Error "float mod"
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (_) -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
