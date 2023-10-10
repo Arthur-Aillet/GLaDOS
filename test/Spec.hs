@@ -1,5 +1,6 @@
-import AstSpec (parserASTTests)
 import Control.Monad
+import AstSpec (parserASTTests)
+import ConverterSpec (converterTests)
 import ParserSpec (parserTests)
 import Test.HUnit
 
@@ -10,5 +11,6 @@ tests :: Test
 tests =
   TestList
     [ parserTests,
-      parserASTTests
+      parserASTTests,
+      converterTests
     ]
