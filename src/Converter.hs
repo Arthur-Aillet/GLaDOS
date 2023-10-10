@@ -7,8 +7,8 @@
 
 module Converter (sexprToAST) where
 
-import Ast (Ast (Truth, AAtom, Call, Define, If, Lambda, Symbol, Func), Atom (AtomI, AtomF))
-import ParserSExpr (SExpr (SInt, SList, SSym, SFloat, SBool))
+import Ast (Ast (AAtom, Call, Define, Func, If, Lambda, Symbol, Truth), Atom (AtomF, AtomI))
+import ParserSExpr (SExpr (SBool, SFloat, SInt, SList, SSym))
 
 convertArgsContinuous :: [SExpr] -> Maybe [Ast]
 convertArgsContinuous (x : xs) = case convertArgsContinuous xs of
