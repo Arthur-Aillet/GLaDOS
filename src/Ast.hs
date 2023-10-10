@@ -114,6 +114,7 @@ displayAST (Symbol x) = if isBuiltin x
   then putStrLn $ "#<procedure " ++ x ++ ">"
   else putStrLn $ "#<symbol " ++ show x ++ ">"
 displayAST x = putStrLn $ "#inevaluable (" ++ show x ++ ")"
+
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
 execCallDistribute ctx (s : ss) (x : xs) = case execCallDistribute ctx ss xs of
@@ -152,6 +153,7 @@ execBuiltins ctx "+" xs = binOp (+) ctx xs
 execBuiltins ctx "-" xs = binOp (-) ctx xs
 execBuiltins ctx "*" xs = binOp (*) ctx xs
 execBuiltins ctx "div" xs = builtinDiv ctx xs
+execBuiltins ctx "/" xs = builtinDiv ctx xs
 execBuiltins ctx "mod" xs = builtinMod ctx xs
 execBuiltins _ call _ = Error ("Symbol '" ++ call ++ "' is not bound")
 
@@ -167,6 +169,7 @@ isBuiltin "+" = True
 isBuiltin "-" = True
 isBuiltin "*" = True
 isBuiltin "div" = True
+isBuiltin "/" = True
 isBuiltin "mod" = True
 isBuiltin _ = False
 
@@ -234,7 +237,7 @@ builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST c
   _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
 
-data Predicates 
+data Predicates
     = Eq
     | Lt
     | LEt
