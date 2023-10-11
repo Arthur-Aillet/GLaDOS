@@ -6,8 +6,7 @@
 -}
 
 module Ast
-  (
-    Atom (AtomI, AtomF),
+  ( Atom (AtomI, AtomF),
     Ast (Symbol, AAtom, Define, Truth, Lambda, Func, Call, Builtin, If, Error, Null),
     evalAST,
     displayAST,
@@ -32,7 +31,8 @@ data Atom
   = AtomI Int
   | AtomF Float
   deriving (Show)
-  -- | Truth Bool
+
+-- \| Truth Bool
 
 expectAtom :: (Context, Ast) -> Ast
 expectAtom (_, AAtom i) = AAtom i
@@ -113,10 +113,11 @@ displayAST (Truth False) = putStrLn "#f"
 displayAST (Lambda _ _) = putStrLn "#<procedure>"
 displayAST (Func name _ _) = putStrLn $ "#<procedure " ++ name ++ ">"
 displayAST (Builtin name _) = putStrLn $ "#<procedure " ++ name ++ ">"
-displayAST (Symbol x) = if isBuiltin x
-  then putStrLn $ "#<procedure " ++ x ++ ">"
-  else putStrLn $ "#<symbol " ++ show x ++ ">"
-displayAST x = putStrLn $ "#inevaluable (" ++ show x ++ ")"
+displayAST (Symbol x) =
+  if isBuiltin x
+    then putStrLn $ "#<procedure " ++ x ++ ">"
+    else putStrLn $ "#<symbol " ++ show x ++ ">"
+displayAST (x) = putStrLn $ "#inevaluable (" ++ show x ++ ")"
 
 execCallDistribute :: Context -> [String] -> [Ast] -> Maybe Context
 execCallDistribute ctx [] [] = Just ctx
@@ -209,36 +210,54 @@ binOp :: (Atom -> Atom -> Atom) -> Context -> [Ast] -> Ast
 binOp _ _ [] = AAtom 0
 binOp _ _ [Error a] = Error a
 binOp _ _ [AAtom a] = AAtom a
-binOp op ctx (a:b:s) = binOp op ctx (this:s)
-    where
-      this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-        (AAtom ia, AAtom ib) -> AAtom (op ia ib)
-        (Error x, _) -> Error x
-        (_, Error x) -> Error x
-        (x, _) -> x
+binOp op ctx (a : b : s) = binOp op ctx (this : s)
+  where
+    this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+      (AAtom ia, AAtom ib) -> AAtom (op ia ib)
+      (Error x, _) -> Error x
+      (_, Error x) -> Error x
+      (x, _) -> x
 binOp _ _ [_] = Error "Bad number of args to binary operand"
+
+builtinEq :: Context -> [Ast] -> Ast
+builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (ia == ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
+builtinEq _ _ = Error "Bad number of args to eq?"
+
+builtinLt :: Context -> [Ast] -> Ast
+builtinLt ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+  (AAtom ia, AAtom ib) -> Truth (ia < ib)
+  (Error x, _) -> Error x
+  (_, Error x) -> Error x
+  (x, _) -> x
+builtinLt _ _ = Error "Bad number of args to <"
 
 builtinDiv :: Context -> [Ast] -> Ast
 builtinDiv _ [] = AAtom 0
 builtinDiv _ [AAtom a] = AAtom a
-builtinDiv ctx (a:b:s) = case this of
-    Error x -> Error x
-    _ -> builtinDiv ctx (this:s)
+builtinDiv ctx (a : b : s) = case this of
+  Error x -> Error x
+  _ -> builtinDiv ctx (this : s)
   where
     this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-      (AAtom ia, AAtom ib) -> if ib == 0
-        then Error "Division by zero is denied"
-        else AAtom (atomDiv ia ib)
+      (AAtom ia, AAtom ib) ->
+        if ib == 0
+          then Error "Division by zero is denied"
+          else AAtom (atomDiv ia ib)
       (Error x, _) -> Error x
       (_, Error x) -> Error x
       (x, _) -> x
 builtinDiv _ _ = Error "Bad number of args to div"
 
 builtinMod :: Context -> [Ast] -> Ast
-builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
-  (AAtom (AtomI ia), AAtom (AtomI ib)) -> if ib == 0
-    then Error "Modulo by zero is denied"
-    else AAtom (AtomI (ia `mod` ib))
+builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+  (AAtom (AtomI ia), AAtom (AtomI ib)) ->
+    if ib == 0
+      then Error "Modulo by zero is denied"
+      else AAtom (AtomI (ia `mod` ib))
   (AAtom (AtomF _), _) -> Error "float mod"
   (_, AAtom (AtomF _)) -> Error "float mod"
   (Error x, _) -> Error x

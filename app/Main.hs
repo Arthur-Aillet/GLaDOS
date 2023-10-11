@@ -16,7 +16,25 @@ import PositionType ( defaultPosition )
 import SyntaxParser (parseManyValidOrEmpty)
 import System.Exit ( ExitCode(ExitFailure), exitSuccess, exitWith )
 import System.IO (BufferMode (..), hGetContents', hIsTerminalDevice, hSetBuffering, stdin, stdout)
+import System.Console.Haskeline
+    ( getInputLine,
+      completeWord,
+      simpleCompletion,
+      runInputT,
+      Completion,
+      InputT,
+      Settings(Settings, autoAddHistory, complete, historyFile) )
+import Control.Monad.IO.Class
+
 import System.Timeout (timeout)
+import Data.HashMap.Internal.Strict (keys)
+import Data.List (isPrefixOf)
+
+keywords :: [String]
+keywords = ["(define", "define", "(lambda", "lambda", "(eq?", "eq?", "(div", "div", "(mod", "mod", "(if", "if"]
+
+search :: [String] -> String -> [Completion]
+search symbols str = map simpleCompletion $ filter (str `isPrefixOf`) (keywords ++ symbols ++ map ('(' :) symbols)
 
 executeFile :: IO ()
 executeFile = do
@@ -27,17 +45,30 @@ executeFile = do
       _ <- loopOnCommands emptyContext sexpr
       exitSuccess
 
-getInstructions :: Context -> IO ExitCode
-getInstructions context = do
-  putStr "GLaDOS> "
-  new_line <- getLine
+haskelineGetline :: InputT IO String
+haskelineGetline = do
+                    input <- getInputLine "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+                    case input of
+                      Nothing -> return ""
+                      Just str -> return str
+
+getInstructions :: Context -> IO ()
+getInstructions (context, depth) = do
+  new_line <- runInputT
+                Settings {
+                  complete = completeWord Nothing " \t" $ return . search (keys context),
+                  historyFile = Just ".history",
+                  autoAddHistory = True
+                }
+                haskelineGetline
   case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
-    Left err -> printErr err >> getInstructions context
+    Left err -> liftIO (printErr err) >> liftIO (exitWith (ExitFailure 84))
+
     Right (sexpr, _, _) -> do
-      new_context <- loopOnCommands context sexpr
+      new_context <- liftIO (loopOnCommands (context, depth) sexpr)
       getInstructions new_context
 
-main :: IO ExitCode
+main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
   bool <- hIsTerminalDevice stdin

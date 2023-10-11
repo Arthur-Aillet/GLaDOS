@@ -23,6 +23,7 @@ dependencies:
 - ghc
 - unordered-containers
 - base >= 4.7 && < 5
+- haskeline
 
 ghc-options:
 - -Wall
@@ -48,6 +49,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - glados
+    - haskeline
 
 tests:
   glados-test:
@@ -60,3 +62,4 @@ tests:
     dependencies:
     - HUnit
     - glados
+    - haskeline
