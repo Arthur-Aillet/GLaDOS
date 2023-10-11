@@ -69,7 +69,7 @@ getInstructions :: Context -> IO ()
 getInstructions (context, depth) = do
   new_line <- runInputT (newSettings (context, depth)) haskelineGetline
   case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
-    Left err -> liftIO (printErr err) >> liftIO (exitWith (ExitFailure 84))
+    Left err -> liftIO (printErr err) >> getInstructions (context, depth)
 
     Right (sexpr, _, _) -> do
       new_context <- liftIO (loopOnCommands (context, depth) sexpr)
