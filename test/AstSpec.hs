@@ -3,10 +3,11 @@ module AstSpec (parserASTTests) where
 import Ast
   ( Ast (AAtom, Builtin, Call, Define, Error, If, Lambda, Null, Symbol, Truth),
     Context,
+    Predicates (..),
     binOp,
     builtinDiv,
-    builtinPredicates,
     builtinMod,
+    builtinPredicates,
     emptyContext,
     evalAST,
     execBuiltins,
@@ -14,7 +15,6 @@ import Ast
     execCallDistribute,
     expectAtom,
     isBuiltin,
-    Predicates(..)
   )
 import Data.HashMap.Lazy
 import Test.HUnit
