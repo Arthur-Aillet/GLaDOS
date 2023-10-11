@@ -9,13 +9,13 @@ this makefile has other rules you can call by using make + [the command of your 
 all             ->  same as make
 clean           ->  cleans the repository of unnecessary files
 fclean          ->  cleans the repository of unnecesary files and of the executable
-re              -> calls fclean then all
+re              ->  calls fclean then all
 quick           ->  compiles without stack
 format          ->  formats the source code according to our coding style
 format_check    ->  checks if the code is to our coding style's standards
-test-run        -> lanches a battery of unit tests
-funct-tests     -> launches a battery of functional tests
-tests           -> launches both the unit and functional tests
+test-run        ->  lanches a battery of unit tests
+funct-tests     ->  launches a battery of functional tests
+tests           ->  launches both the unit and functional tests
 ```
 For instance, if you want to recompile GLaDOS, you can use
 ```
