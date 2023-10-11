@@ -229,24 +229,6 @@ binOp op ctx (a : b : s) = binOp op ctx (this : s)
       (x, _) -> x
 binOp _ _ [_] = Error "Bad number of args to binary operand"
 
-builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] =
-  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-    (AAtom ia, AAtom ib) -> Truth (ia == ib)
-    (Error x, _) -> Error x
-    (_, Error x) -> Error x
-    (x, _) -> x
-builtinEq _ _ = Error "Bad number of args to eq?"
-
-builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] =
-  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-    (AAtom ia, AAtom ib) -> Truth (ia < ib)
-    (Error x, _) -> Error x
-    (_, Error x) -> Error x
-    (x, _) -> x
-builtinLt _ _ = Error "Bad number of args to <"
-
 divByZero :: Atom -> Atom -> Ast
 divByZero _ 0 = Error "Division by zero is denied"
 divByZero ia ib = AAtom (atomDiv ia ib)
