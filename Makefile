@@ -12,6 +12,7 @@ all:
 
 clean:
 	stack clean
+	rm .history
 
 fclean: clean
 	rm -f $(NAME)
