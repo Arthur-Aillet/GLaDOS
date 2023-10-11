@@ -57,16 +57,17 @@ haskelineGetline = do
                       Nothing -> return ""
                       Just str -> return str
 
-getInstructions :: Context -> IO ()
-getInstructions (context, depth) = do
-  new_line <- runInputT
-                Settings {
+newSettings ::  MonadIO m => Context -> Settings m
+newSettings (context, _) = Settings {
                   complete = completeWord Nothing " \t" $
                     return . search (keys context),
                   historyFile = Just ".history",
                   autoAddHistory = True
                 }
-                haskelineGetline
+
+getInstructions :: Context -> IO ()
+getInstructions (context, depth) = do
+  new_line <- runInputT (newSettings (context, depth)) haskelineGetline
   case runParser (parseManyValidOrEmpty parseSExpr) new_line defaultPosition of
     Left err -> liftIO (printErr err) >> liftIO (exitWith (ExitFailure 84))
 
