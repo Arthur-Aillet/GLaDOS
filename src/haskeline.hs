@@ -1,3 +1,10 @@
+{-
+-- EPITECH PROJECT, 2023
+-- haskeline.hs
+-- File description:
+-- GLaDOS haskeline file
+-}
+
 module InputManagment (haskelineGetline) where
 
 import Control.Monad.IO.Class
@@ -5,11 +12,16 @@ import Data.HashMap.Internal.Strict (keys)
 import Data.List (isPrefixOf)
 import System.Console.Haskeline
 
+keywords2 :: [String]
+keywords2 = ["define", "lambda", "eq?", "div", "mod", "if"]
+
 keywords :: [String]
-keywords = ["(define", "define", "(lambda", "lambda", "(eq?", "eq?", "(div", "div", "(mod", "mod", "(if", "if"]
+keywords = ["(define", "(lambda", "(eq?", "(div", "(mod", "(if"] ++ keywords2
 
 search :: [String] -> String -> [Completion]
-search symbols str = map simpleCompletion $ filter (str `isPrefixOf`) (keywords ++ symbols ++ map ('(' :) symbols)
+search symbols str =
+  map simpleCompletion $
+    filter (str `isPrefixOf`) (keywords ++ symbols ++ map ('(' :) symbols)
 
 executeFile :: IO ()
 executeFile = do
@@ -20,9 +32,12 @@ executeFile = do
       _ <- loopOnCommands emptyContext sexpr
       exitSuccess
 
+inputKey :: String
+inputKey = "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+
 haskelineGetline :: InputT IO String
 haskelineGetline = do
-  input <- getInputLine "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+  input <- getInputLine inputKey
   case input of
     Nothing -> return ""
     Just str -> return str

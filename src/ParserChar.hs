@@ -28,22 +28,31 @@ parseClosingQuote :: Parser Char
 parseClosingQuote = withErr "Not Found: Missing closing Quote" (parseChar '"')
 
 parseOpeningParenthesis :: Parser Char
-parseOpeningParenthesis = withErr "Not Found: Missing opening Parenthesis" (parseChar '(')
+parseOpeningParenthesis =
+  withErr "Not Found: Missing opening Parenthesis" (parseChar '(')
 
 parseClosingParenthesis :: Parser Char
-parseClosingParenthesis = withErr "Not Found: Missing closing Parenthesis" (parseChar ')')
+parseClosingParenthesis =
+  withErr "Not Found: Missing closing Parenthesis" (parseChar ')')
 
 parseChar :: Char -> Parser Char
 parseChar x = Parser $ \string pos -> case runParser parseAChar string pos of
   Right (char, new_str, new_pos)
     | x == char -> Right (char, new_str, new_pos)
-    | otherwise -> Left (("Not Found: charactere is not '" ++ [x] ++ "'"), moveCursor pos False)
+    | otherwise ->
+        Left (err, moveCursor pos False)
+    where
+      err = "Not Found: charactere is not '" ++ [x] ++ "'"
   Left (_, new_pos) -> Left ("Not Found: List is empty", new_pos)
 
 parseNotChar :: Char -> Parser Char
 parseNotChar x = Parser $ \string pos -> case runParser parseAChar string pos of
   Right (char, new_str, new_pos)
-    | x == char -> Left (("Not Found: charactere is not '" ++ [x] ++ "'"), moveCursor pos False)
+    | x == char ->
+        Left
+          ( ("Not Found: charactere is not '" ++ [x] ++ "'"),
+            moveCursor pos False
+          )
     | otherwise -> Right (char, new_str, new_pos)
   Left (_, new_pos) -> Left ("Not Found: List is empty", new_pos)
 

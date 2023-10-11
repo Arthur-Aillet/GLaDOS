@@ -15,7 +15,7 @@ module Ast
     execBuiltins,
     Context,
     builtinPredicates,
-    Predicates(..),
+    Predicates (..),
     emptyContext,
     isBuiltin,
     expectAtom,
@@ -138,10 +138,9 @@ execCall ctx call args =
       (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
         Just jLocalCtx -> snd (evalAST jLocalCtx expr)
         Nothing -> Error "Incorrect args to lambda"
-      (_, Symbol sym) ->
-        if isBuiltin sym
-          then execBuiltins ctx sym args
-          else Error ("Symbol '" ++ sym ++ "' is not bound")
+      (_, Symbol sym)
+        | isBuiltin sym -> execBuiltins ctx sym args
+        | otherwise -> Error ("Symbol '" ++ sym ++ "' is not bound")
       (_, Error x) -> Error x
       _ -> Error "call to non-procedure"
   )
@@ -220,19 +219,21 @@ binOp op ctx (a : b : s) = binOp op ctx (this : s)
 binOp _ _ [_] = Error "Bad number of args to binary operand"
 
 builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-  (AAtom ia, AAtom ib) -> Truth (ia == ib)
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  (x, _) -> x
+builtinEq ctx [a, b] =
+  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+    (AAtom ia, AAtom ib) -> Truth (ia == ib)
+    (Error x, _) -> Error x
+    (_, Error x) -> Error x
+    (x, _) -> x
 builtinEq _ _ = Error "Bad number of args to eq?"
 
 builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-  (AAtom ia, AAtom ib) -> Truth (ia < ib)
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  (x, _) -> x
+builtinLt ctx [a, b] =
+  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+    (AAtom ia, AAtom ib) -> Truth (ia < ib)
+    (Error x, _) -> Error x
+    (_, Error x) -> Error x
+    (x, _) -> x
 builtinLt _ _ = Error "Bad number of args to <"
 
 builtinDiv :: Context -> [Ast] -> Ast
@@ -243,36 +244,36 @@ builtinDiv ctx (a : b : s) = case this of
   _ -> builtinDiv ctx (this : s)
   where
     this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-      (AAtom ia, AAtom ib) ->
-        if ib == 0
-          then Error "Division by zero is denied"
-          else AAtom (atomDiv ia ib)
+      (AAtom ia, AAtom ib)
+        | ib == 0 -> Error "Division by zero is denied"
+        | otherwise -> AAtom (atomDiv ia ib)
       (Error x, _) -> Error x
       (_, Error x) -> Error x
       (x, _) -> x
 builtinDiv _ _ = Error "Bad number of args to div"
 
 builtinMod :: Context -> [Ast] -> Ast
-builtinMod ctx [a, b] = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-  (AAtom (AtomI ia), AAtom (AtomI ib)) ->
-    if ib == 0
-      then Error "Modulo by zero is denied"
-      else AAtom (AtomI (ia `mod` ib))
-  (AAtom (AtomF _), _) -> Error "float mod"
-  (_, AAtom (AtomF _)) -> Error "float mod"
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  _ -> Error "mod of non-integer"
+builtinMod ctx [a, b] =
+  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+    (AAtom (AtomI ia), AAtom (AtomI ib))
+      | ib == 0 -> Error "Modulo by zero is denied"
+      | otherwise -> AAtom (AtomI (ia `mod` ib))
+    (AAtom (AtomF _), _) -> Error "float mod"
+    (_, AAtom (AtomF _)) -> Error "float mod"
+    (Error x, _) -> Error x
+    (_, Error x) -> Error x
+    _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
 
+
 data Predicates
-    = Eq
-    | Lt
-    | LEt
-    | Gt
-    | GEt
-    | NEq
-    deriving (Eq, Show)
+  = Eq
+  | Lt
+  | LEt
+  | Gt
+  | GEt
+  | NEq
+  deriving (Eq, Show)
 
 swPredicates :: (Ord a) => Predicates -> (a -> a -> Bool)
 swPredicates Eq = (==)
@@ -283,10 +284,13 @@ swPredicates GEt = (>=)
 swPredicates NEq = (/=)
 
 builtinPredicates :: Predicates -> Context -> [Ast] -> Ast
-builtinPredicates predi ctx [a, b] = case (expectAtom (evalAST ctx a),  expectAtom (evalAST ctx b)) of
-  (AAtom ia, AAtom ib) -> Truth (op ia ib)
-  (Error x, _) -> Error x
-  (_, Error x) -> Error x
-  (x, _) -> x
-  where op = swPredicates predi
-builtinPredicates predi _ _ = Error ("Bad number of args to predicate " ++ show predi)
+builtinPredicates predi ctx [a, b] =
+  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
+    (AAtom ia, AAtom ib) -> Truth (op ia ib)
+    (Error x, _) -> Error x
+    (_, Error x) -> Error x
+    (x, _) -> x
+  where
+    op = swPredicates predi
+builtinPredicates predi _ _ =
+  Error ("Bad number of args to predicate " ++ show predi)
