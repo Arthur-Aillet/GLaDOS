@@ -201,7 +201,10 @@ evalAST (ctx, 0) (Define name x) = case val of
   Error err -> ((ctx, 1), Error err)
   val2 -> ((insert name val2 ctx, 1), Null)
   where
-    val = expectAtom (evalAST (ctx, 1) x)
+    val = case evalAST (ctx, 1) x of
+      (_, Func fname args expr) -> Func fname args expr
+      (_, Lambda args expr) -> Lambda args expr
+      y -> expectAtom y
 evalAST (ctx, depth) (Define name _) =
   ((ctx, depth + 1), Error $ "Define '" ++ name ++ "' at depth " ++ show depth)
 evalAST ctx (AAtom i) = (incrDepth ctx, AAtom i)
