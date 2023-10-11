@@ -26,7 +26,7 @@ format:
 	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
 	ormolu -m inplace $${sourceFiles[*]}
 
-format_check:
+format-check:
 	IFS=$$'\n' sourceFiles=("$$(find src test -type f -name "*.hs")"); \
 	ormolu -m 'check' $${sourceFiles[*]}
 
