@@ -19,19 +19,19 @@ tests           ->  launches both the unit and functional tests
 ```
 For instance, if you want to recompile GLaDOS, you can use
 ```
-GLaDOS$ make re
+$ make re
 ```
 
 # Usage
 ```
-GLaDOS$ ./glados
+$ ./glados
 ```
 to open the interractive command lines
 while the programm is running you can type your command lines, press tab for autocompletion on keywords and defined variables, and press the up and down arrow to access the command history.
 
 
 ```
-GLaDOS$ ./glados <yourfile
+$ ./glados <yourfile
 ```
 to execute the instructions in the file
 
