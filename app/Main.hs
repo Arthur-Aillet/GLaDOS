@@ -47,12 +47,12 @@ executeFile = do
       _ <- loopOnCommands emptyContext sexpr
       exitSuccess
 
-InputKey :: String
-InputKey = "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
+inputKey :: String
+inputKey = "\ESC[38;5;45m\STXGL\ESC[0m\STXa\ESC[38;5;208m\STXDOS\ESC[0m\STX> "
 
 haskelineGetline :: InputT IO String
 haskelineGetline = do
-                    input <- getInputLine InputKey
+                    input <- getInputLine inputKey
                     case input of
                       Nothing -> return ""
                       Just str -> return str
@@ -61,7 +61,8 @@ getInstructions :: Context -> IO ()
 getInstructions (context, depth) = do
   new_line <- runInputT
                 Settings {
-                  complete = completeWord Nothing " \t" $ return . search (keys context),
+                  complete = completeWord Nothing " \t" $
+                    return . search (keys context),
                   historyFile = Just ".history",
                   autoAddHistory = True
                 }

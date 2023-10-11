@@ -265,7 +265,6 @@ builtinMod ctx [a, b] =
     _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
 
-
 data Predicates
   = Eq
   | Lt
