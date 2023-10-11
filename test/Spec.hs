@@ -1,5 +1,5 @@
-import Control.Monad
 import AstSpec (parserASTTests)
+import Control.Monad
 import ConverterSpec (converterTests)
 import ParserSpec (parserTests)
 import Test.HUnit

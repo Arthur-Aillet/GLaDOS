@@ -128,19 +128,30 @@ execCallDistribute (ctx, depth) (s : ss) (x : xs) =
     Nothing -> Nothing
 execCallDistribute _ _ _ = Nothing
 
+execCallFunc :: String -> Context -> [String] -> [Ast] -> Ast -> Ast
+execCallFunc name ctx2 binds args expr =
+  case execCallDistribute ctx2 binds args of
+    Just jLocalCtx -> snd (evalAST jLocalCtx expr)
+    Nothing -> Error ("incorrect args to function '" ++ name ++ "'")
+
+execCallLambda :: Context -> [String] -> [Ast] -> Ast -> Ast
+execCallLambda ctx2 binds args expr =
+  case execCallDistribute ctx2 binds args of
+    Just jLocalCtx -> snd (evalAST jLocalCtx expr)
+    Nothing -> Error "Incorrect args to lambda"
+
+execCallSymbol :: Context -> String -> [Ast] -> Ast
+execCallSymbol ctx sym args
+  | isBuiltin sym = execBuiltins ctx sym args
+  | otherwise = Error ("Symbol '" ++ sym ++ "' is not bound")
+
 execCall :: Context -> Ast -> [Ast] -> (Context, Ast)
 execCall ctx call args =
   ( ctx,
     case evalAST ctx call of
-      (ctx2, Func name binds expr) -> case execCallDistribute ctx2 binds args of
-        Just jLocalCtx -> snd (evalAST jLocalCtx expr)
-        Nothing -> Error ("incorrect args to function '" ++ name ++ "'")
-      (ctx2, Lambda binds expr) -> case execCallDistribute ctx2 binds args of
-        Just jLocalCtx -> snd (evalAST jLocalCtx expr)
-        Nothing -> Error "Incorrect args to lambda"
-      (_, Symbol sym)
-        | isBuiltin sym -> execBuiltins ctx sym args
-        | otherwise -> Error ("Symbol '" ++ sym ++ "' is not bound")
+      (ctx2, Func name binds expr) -> execCallFunc name ctx2 binds args expr
+      (ctx2, Lambda binds expr) -> execCallLambda ctx2 binds args expr
+      (_, Symbol sym) -> execCallSymbol ctx sym args
       (_, Error x) -> Error x
       _ -> Error "call to non-procedure"
   )
@@ -218,23 +229,9 @@ binOp op ctx (a : b : s) = binOp op ctx (this : s)
       (x, _) -> x
 binOp _ _ [_] = Error "Bad number of args to binary operand"
 
-builtinEq :: Context -> [Ast] -> Ast
-builtinEq ctx [a, b] =
-  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-    (AAtom ia, AAtom ib) -> Truth (ia == ib)
-    (Error x, _) -> Error x
-    (_, Error x) -> Error x
-    (x, _) -> x
-builtinEq _ _ = Error "Bad number of args to eq?"
-
-builtinLt :: Context -> [Ast] -> Ast
-builtinLt ctx [a, b] =
-  case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-    (AAtom ia, AAtom ib) -> Truth (ia < ib)
-    (Error x, _) -> Error x
-    (_, Error x) -> Error x
-    (x, _) -> x
-builtinLt _ _ = Error "Bad number of args to <"
+divByZero :: Atom -> Atom -> Ast
+divByZero _ 0 = Error "Division by zero is denied"
+divByZero ia ib = AAtom (atomDiv ia ib)
 
 builtinDiv :: Context -> [Ast] -> Ast
 builtinDiv _ [] = AAtom 0
@@ -244,27 +241,26 @@ builtinDiv ctx (a : b : s) = case this of
   _ -> builtinDiv ctx (this : s)
   where
     this = case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-      (AAtom ia, AAtom ib)
-        | ib == 0 -> Error "Division by zero is denied"
-        | otherwise -> AAtom (atomDiv ia ib)
+      (AAtom ia, AAtom ib) -> divByZero ia ib
       (Error x, _) -> Error x
       (_, Error x) -> Error x
       (x, _) -> x
 builtinDiv _ _ = Error "Bad number of args to div"
 
+modByZero :: Int -> Int -> Ast
+modByZero _ 0 = Error "Modulo by zero is denied"
+modByZero ia ib = AAtom (AtomI (ia `mod` ib))
+
 builtinMod :: Context -> [Ast] -> Ast
 builtinMod ctx [a, b] =
   case (expectAtom (evalAST ctx a), expectAtom (evalAST ctx b)) of
-    (AAtom (AtomI ia), AAtom (AtomI ib))
-      | ib == 0 -> Error "Modulo by zero is denied"
-      | otherwise -> AAtom (AtomI (ia `mod` ib))
+    (AAtom (AtomI ia), AAtom (AtomI ib)) -> modByZero ia ib
     (AAtom (AtomF _), _) -> Error "float mod"
     (_, AAtom (AtomF _)) -> Error "float mod"
     (Error x, _) -> Error x
     (_, Error x) -> Error x
     _ -> Error "mod of non-integer"
 builtinMod _ _ = Error "Bad number of args to mod"
-
 
 data Predicates
   = Eq
